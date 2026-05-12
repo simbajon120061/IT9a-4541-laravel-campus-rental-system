@@ -1,14 +1,11 @@
 <div class="bg-gradient-to-b from-gray-50 to-white py-8 md:py-12">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         @if (session()->has('message'))
-            <div class="mb-6 p-4 md:p-5 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 rounded-xl shadow-sm">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                    {{ session('message') }}
-                </div>
-            </div>
+            <x-floating-action-notice
+                :message="session('message')"
+                :tone="str_contains(session('message'), 'success') || str_contains(session('message'), 'submitted') ? 'success' : 'warning'"
+                wire:key="item-session-notice-{{ $noticeToken }}"
+            />
         @endif
 
         <a
@@ -119,7 +116,7 @@
 
                                 @if($ownerDetails->isNotEmpty() || filled($item->user->bio) || $item->user->isStudentVerified())
                                     <div class="mt-4 border-t border-slate-100 pt-4">
-                                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <div class="grid grid-cols-1 gap-3">
                                             @foreach($ownerDetails as $label => $value)
                                                 <div>
                                                     <p class="text-[11px] font-semibold uppercase text-slate-400">{{ $label }}</p>
@@ -143,33 +140,6 @@
                                 @endif
                             </div>
 
-                            @if (! $isAdmin)
-                                <div class="rounded-lg border border-slate-200 bg-white p-4">
-                                    <p class="text-sm font-semibold text-slate-800">Message Owner</p>
-                                    <div class="mt-3 flex flex-col gap-3 sm:flex-row">
-                                        <div class="flex-1">
-                                            <input
-                                                type="text"
-                                                wire:model.live="ownerMessage"
-                                                maxlength="40"
-                                                class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500"
-                                                placeholder="Ask about this item..."
-                                            >
-                                            <div class="mt-1 flex items-center justify-between gap-3 text-xs">
-                                                @error('ownerMessage')
-                                                    <span class="font-semibold text-rose-600">{{ $message }}</span>
-                                                @else
-                                                    <span class="text-slate-500">Sent through this item conversation.</span>
-                                                @enderror
-                                                <span class="text-slate-500">{{ strlen($ownerMessage) }}/40</span>
-                                            </div>
-                                        </div>
-                                        <button wire:click="sendOwnerMessage" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-                                            Send
-                                        </button>
-                                    </div>
-                                </div>
-                            @endif
                         </div>
 
                         <div class="space-y-4">
@@ -235,7 +205,9 @@
                                             @error('rentalMessage')
                                                 <span class="font-semibold text-red-600">{{ $message }}</span>
                                             @else
-                                                <span class="text-slate-500">Sent through this item conversation.</span>
+                                                <span class="{{ $rentalMessageSentNotice ? 'font-semibold text-emerald-700' : 'text-slate-500' }}">
+                                                    {{ $rentalMessageSentNotice ?: 'Sent through this item conversation.' }}
+                                                </span>
                                             @enderror
                                             <span class="text-slate-500">{{ strlen($rentalMessage) }}/40</span>
                                         </div>

@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Rental;
+use App\Models\User;
+use App\Notifications\RentalMessageSentNotification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +21,21 @@ class MessagesIndex extends Component
     public string $sortBy = 'date';
 
     public ?int $selectedRentalId = null;
+
+    public string $portalContext = 'all';
+
+    public string $messageText = '';
+
+    public function mount(): void
+    {
+        $this->portalContext = match (true) {
+            request()->routeIs('renter.messages') => 'renter',
+            request()->routeIs('lister.messages') => 'lister',
+            session('active_portal') === 'renter' => 'renter',
+            session('active_portal') === 'lister' => 'lister',
+            default => 'all',
+        };
+    }
 
     public function updatedSearch(): void
     {
@@ -42,6 +59,41 @@ class MessagesIndex extends Component
         abort_unless($this->accessibleRentalsQuery()->whereKey($rentalId)->exists(), 403);
 
         $this->selectedRentalId = $rentalId;
+        $this->markConversationAsRead($rentalId);
+    }
+
+    public function sendMessage(): void
+    {
+        abort_unless(Auth::check(), 403);
+        abort_if(Auth::user()?->isAdministrator(), 403);
+        abort_unless($this->selectedRentalId !== null, 404);
+
+        $rental = $this->accessibleRentalsQuery()
+            ->whereKey($this->selectedRentalId)
+            ->with(['item.user', 'renter'])
+            ->firstOrFail();
+
+        $this->messageText = trim($this->messageText);
+
+        $validated = $this->validate([
+            'messageText' => ['required', 'string', 'max:40'],
+        ]);
+
+        $message = $rental->messages()->create([
+            'sender_id' => Auth::id(),
+            'body' => trim($validated['messageText']),
+        ]);
+
+        $recipient = $this->messageRecipient($rental);
+        $recipient?->notify(new RentalMessageSentNotification(
+            rentalId: $rental->id,
+            itemId: $rental->item_id,
+            itemName: $rental->item?->name ?? 'Rental item',
+            senderName: Auth::user()->name,
+            messageBody: $message->body,
+        ));
+
+        $this->reset('messageText');
     }
 
     public function render(): View
@@ -62,7 +114,10 @@ class MessagesIndex extends Component
 
         if ($this->unreadOnly) {
             $conversations = $conversations->filter(function (Rental $rental): bool {
-                return (int) $rental->messages->last()?->sender_id !== (int) Auth::id();
+                return $rental->messages->contains(function ($message): bool {
+                    return (int) $message->sender_id !== (int) Auth::id()
+                        && $message->read_at === null;
+                });
             });
         }
 
@@ -75,6 +130,12 @@ class MessagesIndex extends Component
         $selectedConversation = $conversations->firstWhere('id', $this->selectedRentalId) ?? $conversations->first();
         $this->selectedRentalId = $selectedConversation?->id;
 
+        if ($selectedConversation) {
+            $this->markConversationAsRead($selectedConversation->id);
+            $selectedConversation->load(['item.user', 'renter', 'messages.sender']);
+            $selectedConversation->setRelation('messages', $selectedConversation->messages->sortBy('created_at')->values());
+        }
+
         return view('livewire.messages-index', [
             'conversations' => $conversations,
             'selectedConversation' => $selectedConversation,
@@ -83,11 +144,7 @@ class MessagesIndex extends Component
 
     private function accessibleRentalsQuery(): Builder
     {
-        return Rental::query()
-            ->where(function (Builder $query): void {
-                $query->where('renter_id', Auth::id())
-                    ->orWhereHas('item', fn (Builder $itemQuery) => $itemQuery->where('user_id', Auth::id()));
-            })
+        return $this->portalRentalsQuery()
             ->when(trim($this->search) !== '', function (Builder $query): void {
                 $search = '%'.trim($this->search).'%';
 
@@ -103,10 +160,45 @@ class MessagesIndex extends Component
             });
     }
 
+    private function portalRentalsQuery(): Builder
+    {
+        return Rental::query()
+            ->when(
+                $this->portalContext === 'renter',
+                fn (Builder $query) => $query->where('renter_id', Auth::id()),
+                fn (Builder $query) => $query->when(
+                    $this->portalContext === 'lister',
+                    fn (Builder $query) => $query->whereHas('item', fn (Builder $itemQuery) => $itemQuery->where('user_id', Auth::id())),
+                    fn (Builder $query) => $query->where(function (Builder $query): void {
+                        $query->where('renter_id', Auth::id())
+                            ->orWhereHas('item', fn (Builder $itemQuery) => $itemQuery->where('user_id', Auth::id()));
+                    })
+                )
+            );
+    }
+
     private function otherUserName(Rental $rental): string
     {
         $isOwner = (int) $rental->item?->user_id === (int) Auth::id();
 
         return (string) ($isOwner ? $rental->renter?->name : $rental->item?->user?->name);
+    }
+
+    private function messageRecipient(Rental $rental): ?User
+    {
+        $isOwner = (int) $rental->item?->user_id === (int) Auth::id();
+
+        return $isOwner ? $rental->renter : $rental->item?->user;
+    }
+
+    private function markConversationAsRead(int $rentalId): void
+    {
+        $this->accessibleRentalsQuery()
+            ->whereKey($rentalId)
+            ->firstOrFail()
+            ->messages()
+            ->where('sender_id', '!=', Auth::id())
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
     }
 }

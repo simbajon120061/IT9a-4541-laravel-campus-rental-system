@@ -16,7 +16,7 @@
     x-init="setTimeout(() => show = false, 3500)"
     x-show="show"
     x-transition.opacity.duration.200ms
-    {{ $attributes->merge(['class' => 'relative z-10 mt-2 rounded-lg border px-4 py-2.5 text-center text-xs font-semibold shadow-lg '.$toneClasses]) }}
+    {{ $attributes->merge(['class' => 'fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border px-5 py-4 text-center text-sm font-semibold shadow-2xl '.$toneClasses]) }}
 >
     {{ $message }}
 </div>

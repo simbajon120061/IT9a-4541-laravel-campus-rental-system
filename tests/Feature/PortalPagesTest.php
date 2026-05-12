@@ -7,7 +7,9 @@ use App\Models\Item;
 use App\Models\Rental;
 use App\Models\RentalMessage;
 use App\Models\User;
+use App\Notifications\RentalMessageSentNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -97,6 +99,7 @@ class PortalPagesTest extends TestCase
             ->assertSee('Unread Messages')
             ->assertSee('Sort by')
             ->assertSee('Open rental thread')
+            ->assertSee(route('rental-requests.show', ['rental' => $rental, 'portal' => 'renter']).'#messages', false)
             ->assertSee('Lab Coat')
             ->assertSee('Please return tomorrow.');
     }
@@ -169,7 +172,172 @@ class PortalPagesTest extends TestCase
             ->assertSee('Lab Coat')
             ->assertSee('Please return tomorrow.')
             ->set('unreadOnly', true)
-            ->assertSee('Lab Coat')
+            ->assertSee('No conversations found.')
             ->assertDontSee('I will bring it later.');
+    }
+
+    public function test_messages_page_can_send_messages_with_success_indication(): void
+    {
+        Notification::fake();
+
+        [$owner, $renter, $rental] = $this->createMessageScenario();
+
+        RentalMessage::query()->create([
+            'rental_id' => $rental->id,
+            'sender_id' => $owner->id,
+            'body' => 'Please return tomorrow.',
+        ]);
+
+        Livewire::actingAs($renter)
+            ->test(MessagesIndex::class)
+            ->assertSee('Please return tomorrow.')
+            ->assertSee('Send')
+            ->set('messageText', 'I will bring it.')
+            ->call('sendMessage')
+            ->assertSet('messageText', '')
+            ->assertDontSee('Message sent successfully.')
+            ->assertSee('I will bring it.')
+            ->assertSee('Sent');
+
+        $this->assertDatabaseHas('rental_messages', [
+            'rental_id' => $rental->id,
+            'sender_id' => $renter->id,
+            'body' => 'I will bring it.',
+        ]);
+
+        Notification::assertSentTo(
+            $owner,
+            RentalMessageSentNotification::class,
+            fn (RentalMessageSentNotification $notification): bool => $notification->rentalId === $rental->id
+                && $notification->messageBody === 'I will bring it.'
+        );
+    }
+
+    public function test_messages_are_marked_seen_when_recipient_opens_conversation(): void
+    {
+        [$owner, $renter, $rental] = $this->createMessageScenario();
+
+        $message = RentalMessage::query()->create([
+            'rental_id' => $rental->id,
+            'sender_id' => $owner->id,
+            'body' => 'Please return tomorrow.',
+        ]);
+
+        Livewire::actingAs($renter)
+            ->test(MessagesIndex::class)
+            ->assertSee('Please return tomorrow.');
+
+        $this->assertNotNull($message->fresh()->read_at);
+
+        Livewire::actingAs($owner)
+            ->test(MessagesIndex::class)
+            ->assertSee('Please return tomorrow.')
+            ->assertSee('Seen');
+    }
+
+    public function test_messages_page_keeps_renter_and_lister_portal_conversations_separate(): void
+    {
+        $user = User::factory()->create();
+        $otherRenter = User::factory()->create();
+        $otherOwner = User::factory()->create();
+
+        $ownedItem = Item::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Owned Microscope',
+            'description' => 'Campus lab item',
+            'condition' => 'Good',
+            'price' => 90,
+            'status' => 'rented',
+        ]);
+
+        $rentedItem = Item::query()->create([
+            'user_id' => $otherOwner->id,
+            'name' => 'Borrowed Tripod',
+            'description' => 'Camera tripod',
+            'condition' => 'Good',
+            'price' => 60,
+            'status' => 'rented',
+        ]);
+
+        $listerRental = Rental::query()->create([
+            'item_id' => $ownedItem->id,
+            'renter_id' => $otherRenter->id,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'total_price' => 180,
+            'paid_amount' => 0,
+            'payment_status' => Rental::PAYMENT_STATUS_OUTSTANDING,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        $renterRental = Rental::query()->create([
+            'item_id' => $rentedItem->id,
+            'renter_id' => $user->id,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'total_price' => 120,
+            'paid_amount' => 0,
+            'payment_status' => Rental::PAYMENT_STATUS_OUTSTANDING,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        RentalMessage::query()->create([
+            'rental_id' => $listerRental->id,
+            'sender_id' => $otherRenter->id,
+            'body' => 'Lister portal only.',
+        ]);
+
+        RentalMessage::query()->create([
+            'rental_id' => $renterRental->id,
+            'sender_id' => $user->id,
+            'body' => 'Renter portal only.',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('lister.messages'))
+            ->assertOk()
+            ->assertSee('Owned Microscope')
+            ->assertSee('Lister portal only.')
+            ->assertDontSee('Borrowed Tripod')
+            ->assertDontSee('Renter portal only.');
+
+        $this->actingAs($user)
+            ->get(route('renter.messages'))
+            ->assertOk()
+            ->assertSee('Borrowed Tripod')
+            ->assertSee('Renter portal only.')
+            ->assertDontSee('Owned Microscope')
+            ->assertDontSee('Lister portal only.');
+    }
+
+    /**
+     * @return array{0: User, 1: User, 2: Rental}
+     */
+    private function createMessageScenario(): array
+    {
+        $owner = User::factory()->create(['name' => 'Owner User']);
+        $renter = User::factory()->create(['name' => 'Renter User']);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Lab Coat',
+            'description' => 'Medium size',
+            'condition' => 'Good',
+            'price' => 40,
+            'status' => 'rented',
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'total_price' => 80,
+            'paid_amount' => 0,
+            'payment_status' => Rental::PAYMENT_STATUS_OUTSTANDING,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        return [$owner, $renter, $rental];
     }
 }

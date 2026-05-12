@@ -21,6 +21,7 @@ class AdminUserSeederTest extends TestCase
 
         $this->assertTrue($admin->isAdministrator());
         $this->assertTrue(Hash::check('password', $admin->password));
+        $this->assertNotNull($admin->email_verified_at);
     }
 
     public function test_admin_user_seeder_can_reset_an_existing_admin_account(): void
@@ -37,6 +38,7 @@ class AdminUserSeederTest extends TestCase
 
         $this->assertTrue($admin->isAdministrator());
         $this->assertTrue(Hash::check('password', $admin->password));
+        $this->assertNotNull($admin->email_verified_at);
     }
 
     public function test_database_seeder_uses_umindanao_accounts(): void
@@ -51,5 +53,18 @@ class AdminUserSeederTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'test@umindanao.edu.ph',
         ]);
+    }
+
+    public function test_seeded_admin_can_login_to_admin_dashboard(): void
+    {
+        $this->seed(AdminUserSeeder::class);
+
+        $this->post(route('login'), [
+            'email' => AdminUserSeeder::Email,
+            'password' => 'password',
+        ])->assertRedirect(route('admin.dashboard'));
+
+        $this->assertAuthenticated();
+        $this->assertTrue(auth()->user()->isAdministrator());
     }
 }

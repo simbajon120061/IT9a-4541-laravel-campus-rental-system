@@ -84,6 +84,18 @@ class OwnerRentalRequestViewTest extends TestCase
             ->assertDontSee('Edit Dates');
     }
 
+    public function test_renter_opening_request_thread_keeps_renter_portal_navigation(): void
+    {
+        [, $borrower, $rental] = $this->createRentalRequest();
+        $this->actingAs($borrower);
+
+        $this->get(route('rental-requests.show', ['rental' => $rental, 'portal' => 'renter']))
+            ->assertOk()
+            ->assertSee('Renter Dashboard')
+            ->assertSee('My Rentals')
+            ->assertDontSee('Lister Dashboard');
+    }
+
     public function test_owner_can_update_pending_request_dates_and_total_amount(): void
     {
         [$owner, , $rental] = $this->createRentalRequest();

@@ -63,6 +63,12 @@ class OwnerRentalRequestView extends Component
 
         abort_unless($this->isOwner || $isRenter, 403);
 
+        session()->put('active_portal', match (request('portal')) {
+            'renter' => $isRenter ? 'renter' : 'lister',
+            'lister' => $this->isOwner ? 'lister' : 'renter',
+            default => $isRenter && ! $this->isOwner ? 'renter' : 'lister',
+        });
+
         $this->syncEditableSchedule();
     }
 

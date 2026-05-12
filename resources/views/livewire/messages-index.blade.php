@@ -95,12 +95,12 @@
                                 <h2 class="truncate text-xl font-extrabold text-slate-950 dark:text-white">{{ $otherUser?->name ?? 'Unknown user' }}</h2>
                                 <p class="text-sm text-slate-500 dark:text-slate-400">{{ $isOwner ? 'Renter conversation' : 'Lister conversation' }}</p>
                             </div>
-                            <a href="{{ route('rental-requests.show', $selectedConversation) }}#messages" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5">
+                            <a href="{{ route('rental-requests.show', ['rental' => $selectedConversation, 'portal' => $portalContext]) }}#messages" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5">
                                 Open rental thread
                             </a>
                         </header>
 
-                        <div class="flex-1 space-y-4 overflow-y-auto bg-slate-50/70 p-5 dark:bg-slate-950/50">
+                        <div wire:poll.10s class="flex-1 space-y-4 overflow-y-auto bg-slate-50/70 p-5 dark:bg-slate-950/50">
                             @foreach ($selectedConversation->messages as $message)
                                 @php
                                     $isMine = (int) $message->sender_id === (int) auth()->id();
@@ -113,10 +113,60 @@
                                             <span>{{ $message->created_at->format('M d, g:i A') }}</span>
                                         </div>
                                         <p class="break-words text-sm font-medium leading-relaxed">{{ $message->body }}</p>
+                                        @if ($isMine)
+                                            <div class="mt-1 flex items-center justify-end gap-1 text-[11px] font-semibold {{ $message->read_at ? 'text-blue-100' : 'text-blue-200' }}">
+                                                @if ($message->read_at)
+                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m4 12 5 5L20 6" />
+                                                    </svg>
+                                                    Seen
+                                                @else
+                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Sent
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
                         </div>
+
+                        <form wire:submit.prevent="sendMessage" class="border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="flex items-end gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <label for="messageText" class="sr-only">Message</label>
+                                    <textarea
+                                        id="messageText"
+                                        wire:model.live="messageText"
+                                        rows="2"
+                                        maxlength="40"
+                                        class="w-full resize-none rounded-xl border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 focus:border-blue-500 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                                        placeholder="Write a message..."
+                                    ></textarea>
+                                    <div class="mt-1 flex items-center justify-between gap-3 text-xs">
+                                        @error('messageText')
+                                            <span class="font-semibold text-rose-600 dark:text-rose-300">{{ $message }}</span>
+                                        @else
+                                            <span class="text-slate-500 dark:text-slate-400">Messages are saved in this rental conversation.</span>
+                                        @enderror
+                                        <span class="shrink-0 text-slate-500 dark:text-slate-400">{{ strlen($messageText) }}/40</span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    class="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none dark:disabled:bg-slate-700"
+                                    wire:loading.attr="disabled"
+                                    wire:target="sendMessage"
+                                >
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12 3.3 4.6c-.3-.9.6-1.7 1.4-1.3L21 12 4.7 20.7c-.8.4-1.7-.4-1.4-1.3L6 12Zm0 0h7" />
+                                    </svg>
+                                    <span>Send</span>
+                                </button>
+                            </div>
+                        </form>
                     @else
                         <div class="flex flex-1 items-center justify-center p-8 text-center">
                             <div>

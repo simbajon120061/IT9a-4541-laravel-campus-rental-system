@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\Item;
 use App\Models\Rental;
 use App\Models\Report;
-use App\Notifications\RentalMessageSentNotification;
 use App\Notifications\RentalRequestedNotification;
 use App\Notifications\ReportSubmittedNotification;
 use Carbon\Carbon;
@@ -52,9 +51,9 @@ class ViewItem extends Component
 
     public string $reportDetails = '';
 
-    public string $ownerMessage = '';
-
     public string $rentalRequestNotice = '';
+
+    public string $rentalMessageSentNotice = '';
 
     public string $reportNotice = '';
 
@@ -153,6 +152,7 @@ class ViewItem extends Component
     public function requestRental(): void
     {
         abort_unless(Auth::check(), 403);
+        $this->rentalMessageSentNotice = '';
 
         if (Auth::user()?->isAdministrator()) {
             session()->flash('message', 'Admin accounts cannot create rental requests.');
@@ -221,6 +221,8 @@ class ViewItem extends Component
                 'sender_id' => Auth::id(),
                 'body' => $messageBody,
             ]);
+
+            $this->rentalMessageSentNotice = 'Message sent with your rental request.';
         }
 
         $owner = $this->item->user;
@@ -238,65 +240,7 @@ class ViewItem extends Component
         ));
 
         $this->reset(['startDate', 'endDate', 'rentalMessage']);
-        session()->flash('message', 'Rental request sent successfully!');
         $this->showNotice('rentalRequestNotice', 'Rental request sent successfully!');
-    }
-
-    public function sendOwnerMessage(): void
-    {
-        abort_unless(Auth::check(), 403);
-
-        if (Auth::user()?->isAdministrator()) {
-            session()->flash('message', 'Admin accounts cannot message item owners from this page.');
-
-            return;
-        }
-
-        if ($this->item->user_id === Auth::id()) {
-            session()->flash('message', 'You cannot message yourself about your own item.');
-
-            return;
-        }
-
-        $validated = $this->validate([
-            'ownerMessage' => ['required', 'string', 'max:40'],
-        ]);
-
-        $rental = $this->item->rentals()
-            ->where('renter_id', Auth::id())
-            ->whereIn('status', [Rental::STATUS_PENDING, Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE])
-            ->latest('id')
-            ->first();
-
-        if (! $rental) {
-            $rental = $this->item->rentals()->create([
-                'renter_id' => Auth::id(),
-                'start_date' => now(),
-                'end_date' => now()->addDay(),
-                'total_price' => (float) $this->item->price,
-                'paid_amount' => 0,
-                'payment_status' => Rental::PAYMENT_STATUS_OUTSTANDING,
-                'status' => Rental::STATUS_PENDING,
-            ]);
-        }
-
-        $messageBody = trim($validated['ownerMessage']);
-
-        $rental->messages()->create([
-            'sender_id' => Auth::id(),
-            'body' => $messageBody,
-        ]);
-
-        $this->item->user?->notify(new RentalMessageSentNotification(
-            rentalId: $rental->id,
-            itemId: $this->item->id,
-            itemName: $this->item->name,
-            senderName: Auth::user()->name,
-            messageBody: $messageBody,
-        ));
-
-        $this->reset('ownerMessage');
-        session()->flash('message', 'Message sent to the item owner.');
     }
 
     public function openReportForm(string $type): void

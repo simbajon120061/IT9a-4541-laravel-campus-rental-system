@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Models\Item;
 use App\Models\Rental;
 use App\Models\User;
-use App\Notifications\RentalMessageSentNotification;
 use App\Notifications\RentalRequestedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -86,41 +85,21 @@ class ViewItemRentalValidationTest extends TestCase
             ->set('endDate', now()->addDays(3)->toDateString())
             ->call('requestRental')
             ->assertSee('Rental request sent successfully!')
-            ->assertSee('shadow-lg', false);
+            ->assertSee('left-1/2', false)
+            ->assertSee('shadow-2xl', false);
 
         Notification::assertSentTo($item->user, RentalRequestedNotification::class);
     }
 
-    public function test_potential_renter_can_directly_message_item_owner(): void
+    public function test_item_page_does_not_show_separate_owner_message_box(): void
     {
-        [$owner, $renter, $item] = $this->createItemScenario();
+        [, $renter, $item] = $this->createItemScenario();
 
-        Notification::fake();
         $this->actingAs($renter);
 
         Livewire::test(ViewItem::class, ['id' => $item->id])
-            ->set('ownerMessage', 'Is this still available?')
-            ->call('sendOwnerMessage')
-            ->assertSee('Message sent to the item owner.');
-
-        $rental = Rental::query()->where('item_id', $item->id)
-            ->where('renter_id', $renter->id)
-            ->firstOrFail();
-
-        $this->assertSame(Rental::STATUS_PENDING, $rental->status);
-        $this->assertDatabaseHas('rental_messages', [
-            'rental_id' => $rental->id,
-            'sender_id' => $renter->id,
-            'body' => 'Is this still available?',
-        ]);
-
-        Notification::assertSentTo(
-            $owner,
-            RentalMessageSentNotification::class,
-            fn (RentalMessageSentNotification $notification): bool => $notification->rentalId === $rental->id
-                && $notification->itemId === $item->id
-                && $notification->messageBody === 'Is this still available?'
-        );
+            ->assertDontSee('Message Owner')
+            ->assertDontSee('Ask about this item...');
     }
 
     public function test_item_page_shows_available_owner_information(): void
@@ -163,7 +142,8 @@ class ViewItemRentalValidationTest extends TestCase
             ->set('endDate', now()->addDays(3)->toDateString())
             ->set('rentalMessage', 'Can I pick this up at noon?')
             ->call('requestRental')
-            ->assertSee('Rental request sent successfully!');
+            ->assertSee('Rental request sent successfully!')
+            ->assertSee('Message sent with your rental request.');
 
         $rental = Rental::query()->where('item_id', $item->id)
             ->where('renter_id', $renter->id)

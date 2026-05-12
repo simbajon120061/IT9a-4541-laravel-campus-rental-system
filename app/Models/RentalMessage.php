@@ -12,7 +12,15 @@ class RentalMessage extends Model
         'rental_id',
         'sender_id',
         'body',
+        'read_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'read_at' => 'datetime',
+        ];
+    }
 
     public function rental(): BelongsTo
     {

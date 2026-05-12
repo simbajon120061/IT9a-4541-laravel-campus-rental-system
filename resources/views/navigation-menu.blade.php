@@ -1,5 +1,12 @@
 @php
-    $isListerPortal = request()->routeIs('lister.*', 'my-listings', 'add-item', 'edit-item', 'rental-requests.*', 'rent-inventory-management')
+    $routeRental = request()->route('rental');
+    $isRenterRentalThread = request()->routeIs('rental-requests.show')
+        && Auth::check()
+        && $routeRental instanceof \App\Models\Rental
+        && (int) $routeRental->renter_id === (int) Auth::id()
+        && request('portal') !== 'lister';
+    $isListerPortal = request()->routeIs('lister.*', 'my-listings', 'add-item', 'edit-item', 'rent-inventory-management')
+        || (request()->routeIs('rental-requests.*') && ! $isRenterRentalThread)
         || (
             request()->routeIs('profile.show')
             && request('portal') === 'lister'
