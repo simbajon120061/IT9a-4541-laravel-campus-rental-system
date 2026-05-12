@@ -132,7 +132,7 @@
                                         View Details
                                     </a>
                                 @else
-                                    <a href="{{ route('login') }}" class="block rounded-lg bg-slate-900 px-3 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700">
+                                    <a href="{{ route('login.options') }}" class="block rounded-lg bg-slate-900 px-3 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700">
                                         Sign In
                                     </a>
                                 @endauth

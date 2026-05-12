@@ -24,6 +24,8 @@ class RegistrationTest extends TestCase
         $response->assertSee('First Name');
         $response->assertSee('Last Name');
         $response->assertSee('Phone Number');
+        $response->assertSee('maxlength="11"', false);
+        $response->assertSee('pattern="[0-9]{11}"', false);
         $response->assertSee('Program');
         $response->assertSee('Year Level');
         $response->assertSee('Computing Education');
@@ -69,7 +71,29 @@ class RegistrationTest extends TestCase
             'course' => 'Computing Education',
             'year_level' => '3rd Year',
         ]);
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('portal.choose', absolute: false));
+    }
+
+    public function test_registered_users_choose_how_to_continue(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('portal.choose'))
+            ->assertOk()
+            ->assertSee('How would you like to continue?')
+            ->assertSee('Continue as Lister')
+            ->assertSee('Continue as Renter');
+
+        $this->actingAs($user)
+            ->post(route('portal.continue', ['portal' => 'lister']))
+            ->assertRedirect(route('lister.dashboard', absolute: false))
+            ->assertSessionHas('active_portal', 'lister');
+
+        $this->actingAs($user)
+            ->post(route('portal.continue', ['portal' => 'renter']))
+            ->assertRedirect(route('renter.dashboard', absolute: false))
+            ->assertSessionHas('active_portal', 'renter');
     }
 
     public function test_users_with_non_umindanao_email_cannot_register(): void
@@ -128,6 +152,29 @@ class RegistrationTest extends TestCase
             'first_name' => 'Test',
             'last_name' => 'User',
             'email' => 'missing-phone@umindanao.edu.ph',
+            'course' => User::PROGRAMS[0],
+            'year_level' => User::SCHOOL_LEVELS[0],
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+        ]);
+
+        $response->assertRedirect('/register');
+        $response->assertSessionHasErrors('phone_number');
+        $this->assertGuest();
+    }
+
+    public function test_users_must_provide_an_eleven_digit_phone_number_to_register(): void
+    {
+        if (! Features::enabled(Features::registration())) {
+            $this->markTestSkipped('Registration support is not enabled.');
+        }
+
+        $response = $this->from('/register')->post('/register', [
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'invalid-phone@umindanao.edu.ph',
+            'phone_number' => '091234567890',
             'course' => User::PROGRAMS[0],
             'year_level' => User::SCHOOL_LEVELS[0],
             'password' => 'password',

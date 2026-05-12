@@ -77,7 +77,42 @@ class OwnerRentalRequestViewTest extends TestCase
 
         $this->get(route('rental-requests.show', $rental))
             ->assertOk()
-            ->assertSee('Only the item owner can approve or reject this request.');
+            ->assertSee('Only the item owner can approve or reject this request.')
+            ->assertDontSee('Edit Dates');
+    }
+
+    public function test_owner_can_update_pending_request_dates_and_total_amount(): void
+    {
+        [$owner, , $rental] = $this->createRentalRequest();
+        $this->actingAs($owner);
+
+        Livewire::test(OwnerRentalRequestView::class, ['rental' => $rental])
+            ->call('editSchedule')
+            ->assertSet('isEditingSchedule', true)
+            ->set('editableStartDate', now()->addDays(2)->toDateString())
+            ->set('editableEndDate', now()->addDays(5)->toDateString())
+            ->call('updateSchedule')
+            ->assertSet('isEditingSchedule', false)
+            ->assertSee('Rental dates updated.');
+
+        $rental->refresh();
+
+        $this->assertSame(now()->addDays(2)->toDateString(), $rental->start_date->toDateString());
+        $this->assertSame(now()->addDays(5)->toDateString(), $rental->end_date->toDateString());
+        $this->assertSame('300.00', (string) $rental->total_price);
+    }
+
+    public function test_owner_cannot_set_end_date_before_start_date(): void
+    {
+        [$owner, , $rental] = $this->createRentalRequest();
+        $this->actingAs($owner);
+
+        Livewire::test(OwnerRentalRequestView::class, ['rental' => $rental])
+            ->call('editSchedule')
+            ->set('editableStartDate', now()->addDays(4)->toDateString())
+            ->set('editableEndDate', now()->addDays(3)->toDateString())
+            ->call('updateSchedule')
+            ->assertHasErrors(['editableEndDate' => ['after']]);
     }
 
     public function test_due_tomorrow_alert_is_visible_for_active_rental_with_one_day_left(): void

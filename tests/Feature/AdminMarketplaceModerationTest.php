@@ -10,7 +10,9 @@ use App\Models\Category;
 use App\Models\Item;
 use App\Models\ItemAppeal;
 use App\Models\User;
+use App\Notifications\AppealDecisionNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -53,15 +55,29 @@ class AdminMarketplaceModerationTest extends TestCase
 
         $this->assertSame(ItemAppeal::STATUS_PENDING, $appeal->status);
 
+        Notification::fake();
         $this->actingAs($admin);
 
         Livewire::test(AdminReportsComplaints::class)
             ->call('showTab', 'appeals')
+            ->set("adminNotes.{$appeal->id}", 'Your proof was accepted.')
             ->call('approveAppeal', $appeal->id)
             ->assertSee('Appeal approved and item restored.');
 
         $this->assertFalse($item->fresh()->trashed());
         $this->assertSame(ItemAppeal::STATUS_APPROVED, $appeal->fresh()->status);
+        Notification::assertSentTo(
+            $owner,
+            AppealDecisionNotification::class,
+            function (AppealDecisionNotification $notification) use ($item, $owner): bool {
+                $payload = $notification->toArray($owner);
+
+                return $notification->status === ItemAppeal::STATUS_APPROVED
+                    && $notification->itemName === $item->name
+                    && $notification->adminMessage === 'Your proof was accepted.'
+                    && $payload['url'] === route('my-listings');
+            }
+        );
     }
 
     public function test_admin_cannot_create_rental_request(): void

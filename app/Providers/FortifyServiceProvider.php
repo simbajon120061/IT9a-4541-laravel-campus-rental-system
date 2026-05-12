@@ -8,6 +8,7 @@ use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -37,6 +38,20 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
+        Fortify::loginView(function (Request $request): View {
+            $portal = in_array($request->query('portal'), ['renter', 'lister'], true)
+                ? $request->query('portal')
+                : $request->session()->get('login_portal');
+
+            if (in_array($portal, ['renter', 'lister'], true)) {
+                $request->session()->put('login_portal', $portal);
+            }
+
+            return view('auth.login', [
+                'portal' => $portal,
+            ]);
+        });
+
         Fortify::authenticateUsing(function (Request $request): ?User {
             $email = Str::lower((string) $request->input('email', ''));
             $user = User::query()->where('email', $email)->first();
@@ -53,6 +68,12 @@ class FortifyServiceProvider extends ServiceProvider
 
             if (! Hash::check((string) $request->input('password', ''), (string) $user->password)) {
                 return null;
+            }
+
+            if ($user->isRestricted()) {
+                throw ValidationException::withMessages([
+                    'email' => 'Your account has been restricted by an administrator. You cannot access your account until the restriction is revoked.',
+                ]);
             }
 
             return $user;

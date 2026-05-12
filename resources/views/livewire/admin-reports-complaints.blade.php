@@ -61,7 +61,7 @@
 
                         @if ($report->status === 'pending')
                             <div class="w-full shrink-0 space-y-3 lg:w-72">
-                                <textarea wire:model="adminNotes.{{ $report->id }}" rows="2" class="w-full rounded-lg border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Admin notes"></textarea>
+                                <textarea wire:model="adminNotes.{{ $report->id }}" rows="2" class="w-full rounded-lg border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Formal message sent with this action"></textarea>
                                 <div class="grid gap-2">
                                     <button wire:click="issueWarning({{ $report->id }})" class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600">Issue Warning</button>
                                     @if ($report->reportedItem)
@@ -114,7 +114,7 @@
 
                         @if ($appeal->status === 'pending')
                             <div class="w-full shrink-0 space-y-3 lg:w-72">
-                                <textarea wire:model="adminNotes.{{ $appeal->id }}" rows="2" class="w-full rounded-lg border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Admin notes"></textarea>
+                                <textarea wire:model="adminNotes.{{ $appeal->id }}" rows="2" class="w-full rounded-lg border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Formal message sent with this decision"></textarea>
                                 <button wire:click="approveAppeal({{ $appeal->id }})" class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Approve & Restore</button>
                                 <button wire:click="rejectAppeal({{ $appeal->id }})" class="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Reject Appeal</button>
                             </div>

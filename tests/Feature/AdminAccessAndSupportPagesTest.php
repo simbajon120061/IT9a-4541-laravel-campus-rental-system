@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\AdminUserManagement;
 use App\Models\Item;
 use App\Models\Rental;
 use App\Models\User;
+use App\Notifications\AccountRestrictedNotification;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class AdminAccessAndSupportPagesTest extends TestCase
@@ -71,5 +76,48 @@ class AdminAccessAndSupportPagesTest extends TestCase
             ->assertSee('Total Users')
             ->assertSee('Total Items')
             ->assertSee('Pending Requests');
+    }
+
+    public function test_admin_user_management_shows_date_registered(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $registeredAt = Carbon::parse('2026-05-02 14:35:00');
+
+        User::factory()->create([
+            'name' => 'Student Account',
+            'created_at' => $registeredAt,
+            'updated_at' => $registeredAt,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users'))
+            ->assertOk()
+            ->assertSee('Date Registered')
+            ->assertSee('May 02, 2026')
+            ->assertSee('2:35 PM');
+    }
+
+    public function test_restricted_user_receives_notification(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $student = User::factory()->create();
+
+        Notification::fake();
+        $this->actingAs($admin);
+
+        Livewire::test(AdminUserManagement::class)
+            ->call('restrictUser', $student->id);
+
+        Notification::assertSentTo(
+            $student,
+            AccountRestrictedNotification::class,
+            function (AccountRestrictedNotification $notification) use ($student): bool {
+                $payload = $notification->toArray($student);
+
+                return $payload['title'] === 'Account restricted'
+                    && str_contains($payload['message'], 'Your account has been restricted')
+                    && $payload['url'] === route('profile.show');
+            }
+        );
     }
 }

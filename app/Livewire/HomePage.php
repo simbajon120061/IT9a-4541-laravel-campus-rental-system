@@ -55,13 +55,14 @@ class HomePage extends Component
         $categories = Category::query()
             ->where('is_active', true)
             ->withCount([
-                'items as available_items_count' => fn ($query) => $query->available(),
+                'items as available_items_count' => fn ($query) => $query->available()->visibleToPublic(),
             ])
             ->orderBy('name')
             ->get();
 
         $featuredItemsQuery = Item::query()
             ->available()
+            ->visibleToPublic()
             ->select(['id', 'user_id', 'name', 'description', 'price', 'status', 'category_id', 'image_path', 'created_at'])
             ->with(['user', 'categoryRecord'])
             ->orderByDesc('created_at')

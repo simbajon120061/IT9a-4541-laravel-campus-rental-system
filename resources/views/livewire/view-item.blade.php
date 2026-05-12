@@ -104,7 +104,72 @@
                                         <p class="text-xs text-slate-500">Member since {{ $item->user->created_at->format('M Y') }}</p>
                                     </div>
                                 </div>
+
+                                @php
+                                    $ownerDetails = collect([
+                                        'Email' => $item->user->email,
+                                        'Phone' => $item->user->phone_number,
+                                        'Secondary phone' => $item->user->secondary_phone_number,
+                                        'Student ID' => $item->user->student_id,
+                                        'Department' => $item->user->department,
+                                        'Course' => $item->user->course,
+                                        'Year level' => $item->user->year_level,
+                                    ])->filter();
+                                @endphp
+
+                                @if($ownerDetails->isNotEmpty() || filled($item->user->bio) || $item->user->isStudentVerified())
+                                    <div class="mt-4 border-t border-slate-100 pt-4">
+                                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            @foreach($ownerDetails as $label => $value)
+                                                <div>
+                                                    <p class="text-[11px] font-semibold uppercase text-slate-400">{{ $label }}</p>
+                                                    <p class="break-words text-sm text-slate-700">{{ $value }}</p>
+                                                </div>
+                                            @endforeach
+                                            @if($item->user->isStudentVerified())
+                                                <div>
+                                                    <p class="text-[11px] font-semibold uppercase text-slate-400">Verification</p>
+                                                    <p class="text-sm font-semibold text-emerald-700">Verified student</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @if(filled($item->user->bio))
+                                            <div class="mt-3">
+                                                <p class="text-[11px] font-semibold uppercase text-slate-400">Bio</p>
+                                                <p class="text-sm leading-relaxed text-slate-700">{{ $item->user->bio }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
+
+                            @if (! $isAdmin)
+                                <div class="rounded-lg border border-slate-200 bg-white p-4">
+                                    <p class="text-sm font-semibold text-slate-800">Message Owner</p>
+                                    <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+                                        <div class="flex-1">
+                                            <input
+                                                type="text"
+                                                wire:model.live="ownerMessage"
+                                                maxlength="40"
+                                                class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                                placeholder="Ask about this item..."
+                                            >
+                                            <div class="mt-1 flex items-center justify-between gap-3 text-xs">
+                                                @error('ownerMessage')
+                                                    <span class="font-semibold text-rose-600">{{ $message }}</span>
+                                                @else
+                                                    <span class="text-slate-500">Sent through this item conversation.</span>
+                                                @enderror
+                                                <span class="text-slate-500">{{ strlen($ownerMessage) }}/40</span>
+                                            </div>
+                                        </div>
+                                        <button wire:click="sendOwnerMessage" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                                            Send
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <div class="space-y-4">
@@ -153,9 +218,16 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-xs text-slate-600 mb-1">Additional Notes (Optional)</label>
-                                        <textarea wire:model="additionalNotes" rows="2" class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Any special request or message for the owner."></textarea>
-                                        @error('additionalNotes') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                        <label class="block text-xs text-slate-600 mb-1">Message (Optional)</label>
+                                        <textarea wire:model.live="rentalMessage" maxlength="40" rows="2" class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Message the owner about this request."></textarea>
+                                        <div class="mt-1 flex items-center justify-between gap-3 text-xs">
+                                            @error('rentalMessage')
+                                                <span class="font-semibold text-red-600">{{ $message }}</span>
+                                            @else
+                                                <span class="text-slate-500">Sent through this item conversation.</span>
+                                            @enderror
+                                            <span class="text-slate-500">{{ strlen($rentalMessage) }}/40</span>
+                                        </div>
                                     </div>
 
                                     <button

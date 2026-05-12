@@ -12,7 +12,7 @@ class DashboardPageTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dashboard_displays_summary_cards_quick_links_and_recent_activity(): void
+    public function test_lister_dashboard_displays_summary_cards_quick_links_and_recent_activity(): void
     {
         $owner = User::factory()->create();
         $renter = User::factory()->create();
@@ -26,7 +26,7 @@ class DashboardPageTest extends TestCase
             'status' => 'available',
         ]);
 
-        $rentedItemDueSoon = Item::query()->create([
+        $rentedItem = Item::query()->create([
             'user_id' => $owner->id,
             'name' => 'Scientific Calculator',
             'description' => 'For engineering classes',
@@ -35,23 +35,14 @@ class DashboardPageTest extends TestCase
             'status' => 'rented',
         ]);
 
-        $rentedItemNotDueSoon = Item::query()->create([
-            'user_id' => $owner->id,
-            'name' => 'Lab Coat',
-            'description' => 'Medium size',
-            'condition' => 'Good',
-            'price' => 40,
-            'status' => 'rented',
-        ]);
-
         Rental::query()->create([
-            'item_id' => $rentedItemDueSoon->id,
+            'item_id' => $rentedItem->id,
             'renter_id' => $renter->id,
             'start_date' => now()->subDay(),
             'end_date' => now()->addDays(3),
             'total_price' => 240,
-            'paid_amount' => 0,
-            'payment_status' => 'outstanding',
+            'paid_amount' => 100,
+            'payment_status' => 'partial',
             'status' => 'active',
         ]);
 
@@ -67,39 +58,6 @@ class DashboardPageTest extends TestCase
         ]);
 
         Rental::query()->create([
-            'item_id' => $rentedItemNotDueSoon->id,
-            'renter_id' => $renter->id,
-            'start_date' => now()->subDay(),
-            'end_date' => now()->addDays(12),
-            'total_price' => 480,
-            'paid_amount' => 0,
-            'payment_status' => 'outstanding',
-            'status' => 'active',
-        ]);
-
-        Rental::query()->create([
-            'item_id' => $availableItem->id,
-            'renter_id' => $renter->id,
-            'start_date' => now()->addDays(5),
-            'end_date' => now()->addDays(9),
-            'total_price' => 200,
-            'paid_amount' => 100,
-            'payment_status' => 'partial',
-            'status' => 'approved',
-        ]);
-
-        Rental::query()->create([
-            'item_id' => $availableItem->id,
-            'renter_id' => $renter->id,
-            'start_date' => now()->subDays(4),
-            'end_date' => now()->subDay(),
-            'total_price' => 120,
-            'paid_amount' => 0,
-            'payment_status' => 'outstanding',
-            'status' => 'active',
-        ]);
-
-        Rental::query()->create([
             'item_id' => $availableItem->id,
             'renter_id' => $renter->id,
             'start_date' => now()->subDays(10),
@@ -110,22 +68,19 @@ class DashboardPageTest extends TestCase
             'status' => 'completed',
         ]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('lister.dashboard'));
 
         $response->assertOk()
-            ->assertSee('Dashboard')
-            ->assertSee("Welcome back! Here's your rental overview.", false)
-            ->assertSee('Active Rentals')
-            ->assertSee('Active Listings')
+            ->assertSee('Lister Dashboard')
+            ->assertSee('Manage listed items, rental requests, payments, and inventory activity.')
+            ->assertSee('Total Listings')
+            ->assertSee('Available Listings')
             ->assertSee('Pending Requests')
             ->assertSee('Total Earnings')
-            ->assertSee('₱400')
-            ->assertSee('1')
-            ->assertSee('Recent Activity')
-            ->assertSee('Quick Actions')
-            ->assertSee('Browse Marketplace')
-            ->assertSee('List an Item')
-            ->assertSee('View My Rentals')
+            ->assertSee('&#8369;400', false)
+            ->assertSee('Lister Actions')
+            ->assertSee('My Listings')
+            ->assertSee('Inventory')
             ->assertSee('Scientific Calculator')
             ->assertSee('Biology Textbook');
     }

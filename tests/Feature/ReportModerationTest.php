@@ -11,7 +11,11 @@ use App\Models\Rental;
 use App\Models\RentalMessage;
 use App\Models\Report;
 use App\Models\User;
+use App\Notifications\AccountRestrictedNotification;
+use App\Notifications\ReportActionTakenNotification;
+use App\Notifications\ReportSubmittedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -23,6 +27,7 @@ class ReportModerationTest extends TestCase
     {
         [, $renter, $item] = $this->createRentalScenario();
 
+        Notification::fake();
         $this->actingAs($renter);
 
         Livewire::test(ViewItem::class, ['id' => $item->id])
@@ -39,6 +44,21 @@ class ReportModerationTest extends TestCase
             'type' => Report::TYPE_ITEM,
             'status' => Report::STATUS_PENDING,
         ]);
+
+        Notification::assertSentTo(
+            $item->user,
+            ReportSubmittedNotification::class,
+            function (ReportSubmittedNotification $notification) use ($item, $renter): bool {
+                $payload = $notification->toArray($item->user);
+
+                return $notification->reportType === Report::TYPE_ITEM
+                    && $notification->reason === 'Misleading item details'
+                    && $notification->reporterName === $renter->name
+                    && $notification->itemName === $item->name
+                    && $payload['title'] === 'Report received'
+                    && $payload['url'] === route('my-listings');
+            }
+        );
 
         Livewire::test(ViewItem::class, ['id' => $item->id])
             ->call('openReportForm', Report::TYPE_USER)
@@ -62,6 +82,7 @@ class ReportModerationTest extends TestCase
             'body' => 'Pay now',
         ]);
 
+        Notification::fake();
         $this->actingAs($renter);
 
         Livewire::test(OwnerRentalRequestView::class, ['rental' => $rental])
@@ -76,6 +97,19 @@ class ReportModerationTest extends TestCase
             'reported_message_id' => $message->id,
             'type' => Report::TYPE_MESSAGE,
         ]);
+
+        Notification::assertSentTo(
+            $owner,
+            ReportSubmittedNotification::class,
+            function (ReportSubmittedNotification $notification) use ($owner, $renter): bool {
+                $payload = $notification->toArray($owner);
+
+                return $notification->reportType === Report::TYPE_MESSAGE
+                    && $notification->reason === 'Threatening message'
+                    && $notification->reporterName === $renter->name
+                    && $payload['title'] === 'Report received';
+            }
+        );
     }
 
     public function test_admin_can_issue_warning_remove_item_and_remove_account_after_verification(): void
@@ -104,18 +138,34 @@ class ReportModerationTest extends TestCase
             'reason' => 'Repeated unsafe behavior',
         ]);
 
+        Notification::fake();
         $this->actingAs($admin);
 
         Livewire::test(AdminDashboard::class)
+            ->set("adminNotes.{$warningReport->id}", 'Please keep exchanges respectful.')
             ->call('issueWarning', $warningReport->id)
             ->call('removeItem', $itemReport->id)
             ->call('removeAccount', $accountReport->id);
 
         $this->assertSame(1, $owner->fresh()->warning_count);
         $this->assertSoftDeleted($item);
-        $this->assertDatabaseMissing('users', [
-            'id' => $accountTarget->id,
-        ]);
+        $accountTarget->refresh();
+        $this->assertFalse($accountTarget->trashed());
+        $this->assertNotNull($accountTarget->restricted_at);
+        $this->assertSame($admin->id, $accountTarget->restricted_by);
+
+        Notification::assertSentTo(
+            $accountTarget,
+            AccountRestrictedNotification::class,
+            function (AccountRestrictedNotification $notification) use ($accountReport, $accountTarget): bool {
+                $payload = $notification->toArray($accountTarget);
+
+                return $notification->reportId === $accountReport->id
+                    && $notification->reason === 'Repeated unsafe behavior'
+                    && $payload['title'] === 'Account restricted';
+            }
+        );
+
         $this->assertDatabaseHas('reports', [
             'id' => $warningReport->id,
             'status' => Report::STATUS_REVIEWED,
@@ -134,6 +184,31 @@ class ReportModerationTest extends TestCase
             'admin_action' => Report::ACTION_ACCOUNT_REMOVED,
             'reviewed_by' => $admin->id,
         ]);
+
+        Notification::assertSentTo(
+            $renter,
+            ReportActionTakenNotification::class,
+            function (ReportActionTakenNotification $notification) use ($renter): bool {
+                $payload = $notification->toArray($renter);
+
+                return $notification->audience === 'reporter'
+                    && $notification->action === Report::ACTION_WARNING
+                    && $payload['title'] === 'Report action update';
+            }
+        );
+
+        Notification::assertSentTo(
+            $owner,
+            ReportActionTakenNotification::class,
+            function (ReportActionTakenNotification $notification) use ($owner): bool {
+                $payload = $notification->toArray($owner);
+
+                return $notification->audience === 'target'
+                    && $notification->action === Report::ACTION_WARNING
+                    && $notification->adminMessage === 'Please keep exchanges respectful.'
+                    && str_contains($payload['message'], 'Admin message: Please keep exchanges respectful.');
+            }
+        );
     }
 
     /**

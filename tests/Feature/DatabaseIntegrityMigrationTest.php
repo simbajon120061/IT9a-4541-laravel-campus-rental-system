@@ -15,6 +15,10 @@ class DatabaseIntegrityMigrationTest extends TestCase
         $this->assertFalse(Schema::hasColumn('items', 'category'));
         $this->assertTrue(Schema::hasColumn('items', 'deleted_at'));
 
+        $this->assertTrue(Schema::hasColumn('users', 'restricted_at'));
+        $this->assertTrue(Schema::hasColumn('users', 'restricted_by'));
+        $this->assertTrue(Schema::hasColumn('users', 'deleted_at'));
+
         $this->assertTrue(Schema::hasColumn('rentals', 'approved_at'));
         $this->assertTrue(Schema::hasColumn('rentals', 'active_at'));
         $this->assertTrue(Schema::hasColumn('rentals', 'completed_at'));

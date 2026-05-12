@@ -24,10 +24,13 @@
                     <tr>
                         <th class="px-5 py-3">User</th>
                         <th class="px-5 py-3">Role</th>
+                        <th class="px-5 py-3">Date Registered</th>
+                        <th class="px-5 py-3">Status</th>
                         <th class="px-5 py-3">Warnings</th>
                         <th class="px-5 py-3">Items</th>
                         <th class="px-5 py-3">Rentals</th>
                         <th class="px-5 py-3">Verified</th>
+                        <th class="px-5 py-3 text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
@@ -38,6 +41,18 @@
                                 <div class="text-xs text-slate-500 dark:text-slate-400">{{ $user->email }}</div>
                             </td>
                             <td class="px-5 py-4">{{ $user->isAdministrator() ? 'Admin' : 'Student' }}</td>
+                            <td class="px-5 py-4">
+                                <div class="font-medium text-slate-900 dark:text-slate-100">{{ $user->created_at->format('M d, Y') }}</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">{{ $user->created_at->format('g:i A') }}</div>
+                            </td>
+                            <td class="px-5 py-4">
+                                <span class="rounded-lg px-3 py-1.5 text-xs font-semibold
+                                    @if ($user->trashed()) bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300
+                                    @elseif ($user->isRestricted()) bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200
+                                    @else bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 @endif">
+                                    {{ $user->accountStatusLabel() }}
+                                </span>
+                            </td>
                             <td class="px-5 py-4">{{ $user->warning_count }}</td>
                             <td class="px-5 py-4">{{ $user->items_count }}</td>
                             <td class="px-5 py-4">{{ $user->rentals_count }}</td>
@@ -50,9 +65,28 @@
                                     </button>
                                 @endif
                             </td>
+                            <td class="px-5 py-4 text-right">
+                                <div class="flex flex-wrap justify-end gap-2">
+                                    <button wire:click="viewUserDetails({{ $user->id }})" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:text-slate-200">
+                                        View Details
+                                    </button>
+
+                                    @if (! $user->isAdministrator() && ! $user->trashed())
+                                        @if ($user->isRestricted())
+                                            <button wire:click="revokeRestriction({{ $user->id }})" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700">
+                                                Revoke
+                                            </button>
+                                        @else
+                                            <button wire:click="restrictUser({{ $user->id }})" class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-600">
+                                                Restrict
+                                            </button>
+                                        @endif
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">No users found.</td></tr>
+                        <tr><td colspan="9" class="px-5 py-10 text-center text-slate-500">No users found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -60,4 +94,74 @@
     </div>
 
     <div class="mt-6">{{ $users->links() }}</div>
+
+    @if ($viewingUser)
+        <x-dialog-modal wire:model.live="viewingUserId">
+            <x-slot name="title">
+                User Details
+            </x-slot>
+
+            <x-slot name="content">
+                <div class="space-y-5">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">{{ $viewingUser->name }}</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ $viewingUser->email }}</p>
+                    </div>
+
+                    <dl class="grid gap-3 sm:grid-cols-2">
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Status</dt>
+                            <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->accountStatusLabel() }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Role</dt>
+                            <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->isAdministrator() ? 'Admin' : 'Student' }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Date Registered</dt>
+                            <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->created_at->format('M d, Y g:i A') }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Student ID</dt>
+                            <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->student_id ?: 'Not provided' }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Phone</dt>
+                            <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->phone_number ?: 'Not provided' }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Program</dt>
+                            <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->course ?: 'Not provided' }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Warnings</dt>
+                            <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->warning_count }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                            <dt class="text-xs font-semibold uppercase text-slate-500">Activity</dt>
+                            <dd class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{{ $viewingUser->items_count }} items, {{ $viewingUser->rentals_count }} rentals</dd>
+                        </div>
+                    </dl>
+
+                    @if ($viewingUser->restricted_at)
+                        <p class="rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-900 dark:bg-amber-900/30 dark:text-amber-100">
+                            Restricted since {{ $viewingUser->restricted_at->format('M d, Y g:i A') }}.
+                        </p>
+                    @endif
+
+                    @if ($viewingUser->trashed())
+                        <p class="rounded-lg bg-slate-100 p-3 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                            Deactivated on {{ $viewingUser->deleted_at?->format('M d, Y g:i A') }}.
+                        </p>
+                    @endif
+                </div>
+            </x-slot>
+
+            <x-slot name="footer">
+                <x-secondary-button wire:click="closeUserDetails">
+                    Close
+                </x-secondary-button>
+            </x-slot>
+        </x-dialog-modal>
+    @endif
 </div>

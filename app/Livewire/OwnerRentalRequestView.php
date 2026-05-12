@@ -7,6 +7,8 @@ use App\Models\Report;
 use App\Models\User;
 use App\Notifications\RentalMessageSentNotification;
 use App\Notifications\RentalRequestDecisionNotification;
+use App\Notifications\ReportSubmittedNotification;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -20,6 +22,12 @@ class OwnerRentalRequestView extends Component
     public bool $isOwner = false;
 
     public string $messageText = '';
+
+    public bool $isEditingSchedule = false;
+
+    public string $editableStartDate = '';
+
+    public string $editableEndDate = '';
 
     public bool $showReportForm = false;
 
@@ -46,6 +54,8 @@ class OwnerRentalRequestView extends Component
         $isRenter = (int) $this->rental->renter_id === (int) Auth::id();
 
         abort_unless($this->isOwner || $isRenter, 403);
+
+        $this->syncEditableSchedule();
     }
 
     public function sendMessage(): void
@@ -129,6 +139,59 @@ class OwnerRentalRequestView extends Component
         session()->flash('message', 'Rental request rejected.');
     }
 
+    public function editSchedule(): void
+    {
+        abort_unless(Auth::check(), 403);
+        abort_unless($this->isOwner, 403);
+
+        if ($this->rental->status !== Rental::STATUS_PENDING) {
+            return;
+        }
+
+        $this->syncEditableSchedule();
+        $this->isEditingSchedule = true;
+        $this->resetValidation();
+    }
+
+    public function cancelScheduleEdit(): void
+    {
+        $this->syncEditableSchedule();
+        $this->isEditingSchedule = false;
+        $this->resetValidation();
+    }
+
+    public function updateSchedule(): void
+    {
+        abort_unless(Auth::check(), 403);
+        abort_unless($this->isOwner, 403);
+
+        if ($this->rental->status !== Rental::STATUS_PENDING) {
+            return;
+        }
+
+        $validated = $this->validate([
+            'editableStartDate' => ['required', 'date', 'after_or_equal:today'],
+            'editableEndDate' => ['required', 'date', 'after:editableStartDate'],
+        ]);
+
+        $startDate = Carbon::parse($validated['editableStartDate'])->startOfDay();
+        $endDate = Carbon::parse($validated['editableEndDate'])->startOfDay();
+        $seconds = $startDate->diffInSeconds($endDate, false);
+        $days = max(1, (int) ceil($seconds / 86400));
+
+        $this->rental->update([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'total_price' => $days * (float) $this->rental->item->price,
+        ]);
+
+        $this->rental->refresh()->load(['item.user', 'renter']);
+        $this->syncEditableSchedule();
+        $this->isEditingSchedule = false;
+
+        session()->flash('message', 'Rental dates updated.');
+    }
+
     public function openUserReportForm(int $userId): void
     {
         abort_unless(Auth::check(), 403);
@@ -192,7 +255,7 @@ class OwnerRentalRequestView extends Component
             $reportedMessageId = null;
         }
 
-        Report::query()->create([
+        $report = Report::query()->create([
             'reporter_id' => Auth::id(),
             'reported_user_id' => $reportedUserId,
             'reported_message_id' => $reportedMessageId,
@@ -200,6 +263,13 @@ class OwnerRentalRequestView extends Component
             'reason' => trim($validated['reportReason']),
             'details' => trim((string) $validated['reportDetails']) ?: null,
         ]);
+
+        User::query()->find($reportedUserId)?->notify(new ReportSubmittedNotification(
+            reportId: $report->id,
+            reportType: $report->type,
+            reason: $report->reason,
+            reporterName: Auth::user()->name,
+        ));
 
         $this->cancelReport();
         session()->flash('message', 'Report submitted. An admin will verify it.');
@@ -214,6 +284,12 @@ class OwnerRentalRequestView extends Component
         $this->reportReason = '';
         $this->reportDetails = '';
         $this->showReportForm = true;
+    }
+
+    private function syncEditableSchedule(): void
+    {
+        $this->editableStartDate = $this->rental->start_date->toDateString();
+        $this->editableEndDate = $this->rental->end_date->toDateString();
     }
 
     public function render(): View

@@ -106,4 +106,42 @@ class ItemFilterTest extends TestCase
             ->assertSee('Item 01')
             ->assertSet('itemsToShow', 24);
     }
+
+    public function test_restricted_user_listings_are_hidden_from_marketplace_filters(): void
+    {
+        $activeUser = User::factory()->create();
+        $restrictedUser = User::factory()->create([
+            'restricted_at' => now(),
+        ]);
+        $category = Category::query()->create([
+            'name' => 'Electronics',
+            'slug' => 'electronics-restricted-user-test',
+            'icon' => 'device',
+            'is_active' => true,
+        ]);
+
+        Item::query()->create([
+            'user_id' => $activeUser->id,
+            'name' => 'Visible Calculator',
+            'description' => 'Available item',
+            'price' => 40,
+            'condition' => 'Good',
+            'status' => 'available',
+            'category_id' => $category->id,
+        ]);
+
+        Item::query()->create([
+            'user_id' => $restrictedUser->id,
+            'name' => 'Hidden Calculator',
+            'description' => 'Restricted owner item',
+            'price' => 50,
+            'condition' => 'Good',
+            'status' => 'available',
+            'category_id' => $category->id,
+        ]);
+
+        Livewire::test(ItemFilter::class)
+            ->assertSee('Visible Calculator')
+            ->assertDontSee('Hidden Calculator');
+    }
 }

@@ -4,6 +4,9 @@ namespace App\Livewire;
 
 use App\Models\ItemAppeal;
 use App\Models\Report;
+use App\Notifications\AccountRestrictedNotification;
+use App\Notifications\AppealDecisionNotification;
+use App\Notifications\ReportActionTakenNotification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -104,11 +107,21 @@ class AdminReportsComplaints extends Component
         }
 
         DB::transaction(function () use ($report, $targetUser): void {
+            $targetUser->forceFill([
+                'restricted_at' => now(),
+                'restricted_by' => Auth::id(),
+            ])->save();
+
+            $targetUser->notify(new AccountRestrictedNotification(
+                reportId: $report->id,
+                reason: $report->reason,
+                adminMessage: trim($this->adminNotes[$report->id] ?? '') ?: null,
+            ));
+
             $this->completeReport($report, Report::ACTION_ACCOUNT_REMOVED);
-            $targetUser->delete();
         });
 
-        session()->flash('message', 'Account removed and report marked reviewed.');
+        session()->flash('message', 'Account restricted and report marked reviewed.');
     }
 
     public function approveAppeal(int $appealId): void
@@ -162,7 +175,7 @@ class AdminReportsComplaints extends Component
         return Report::query()
             ->whereKey($reportId)
             ->where('status', Report::STATUS_PENDING)
-            ->with(['reportedUser', 'reportedItem.user', 'reportedMessage.sender'])
+            ->with(['reporter', 'reportedUser', 'reportedItem.user', 'reportedMessage.sender'])
             ->firstOrFail();
     }
 
@@ -177,25 +190,62 @@ class AdminReportsComplaints extends Component
 
     private function completeReport(Report $report, string $action): void
     {
+        $adminMessage = trim($this->adminNotes[$report->id] ?? '') ?: null;
+
         $report->update([
             'status' => Report::STATUS_REVIEWED,
             'reviewed_by' => Auth::id(),
             'admin_action' => $action,
-            'admin_notes' => trim($this->adminNotes[$report->id] ?? '') ?: null,
+            'admin_notes' => $adminMessage,
             'reviewed_at' => now(),
         ]);
+
+        $report->loadMissing(['reporter', 'reportedItem.user', 'reportedMessage.sender', 'reportedUser']);
+        $itemName = $report->reportedItem?->name;
+
+        $report->reporter?->notify(new ReportActionTakenNotification(
+            reportId: $report->id,
+            audience: 'reporter',
+            action: $action,
+            reason: $report->reason,
+            adminMessage: $adminMessage,
+            itemName: $itemName,
+        ));
+
+        $targetUser = $report->targetUser();
+
+        if ($targetUser && (int) $targetUser->id !== (int) $report->reporter_id) {
+            $targetUser->notify(new ReportActionTakenNotification(
+                reportId: $report->id,
+                audience: 'target',
+                action: $action,
+                reason: $report->reason,
+                adminMessage: $adminMessage,
+                itemName: $itemName,
+            ));
+        }
 
         unset($this->adminNotes[$report->id]);
     }
 
     private function completeAppeal(ItemAppeal $appeal, string $status): void
     {
+        $adminMessage = trim($this->adminNotes[$appeal->id] ?? '') ?: null;
+
         $appeal->update([
             'status' => $status,
             'reviewed_by' => Auth::id(),
-            'admin_notes' => trim($this->adminNotes[$appeal->id] ?? '') ?: null,
+            'admin_notes' => $adminMessage,
             'reviewed_at' => now(),
         ]);
+
+        $appeal->loadMissing(['item', 'user']);
+        $appeal->user?->notify(new AppealDecisionNotification(
+            appealId: $appeal->id,
+            itemName: $appeal->item?->name ?? 'your listing',
+            status: $status,
+            adminMessage: $adminMessage,
+        ));
 
         unset($this->adminNotes[$appeal->id]);
     }

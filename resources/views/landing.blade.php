@@ -25,7 +25,7 @@
             </a>
 
             <div class="flex items-center gap-3">
-                <a href="{{ route('login') }}" class="hidden sm:inline-flex text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition gap: p-4">Sign In</a>
+                <a href="{{ route('login.options') }}" class="hidden sm:inline-flex text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition gap: p-4">Sign In</a>
                 <a href="{{ route('register') }}" class="rounded-lg bg-gradient-primary px-4 py-2 text-sm font-semibold text-white hover:shadow-lg hover:shadow-primary-500/50 transition-all duration-300">Sign Up</a>
             </div>
         </div>
@@ -205,7 +205,7 @@
                 <a href="{{ route('register') }}" class="px-8 py-4 rounded-xl bg-white text-primary-600 font-bold text-lg hover:bg-blue-50 transition-all duration-300 hover:shadow-2xl hover:shadow-white/50 hover:-translate-y-1">
                     Sign Up Now
                 </a>
-                <a href="{{ route('login') }}" class="px-8 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all duration-300 hover:border-white/50">
+                <a href="{{ route('login.options') }}" class="px-8 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white font-bold text-lg border-2 border-white/30 hover:bg-white/20 transition-all duration-300 hover:border-white/50">
                     Already a Member?
                 </a>
             </div>

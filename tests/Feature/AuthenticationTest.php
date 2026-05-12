@@ -29,7 +29,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('renter.dashboard', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -56,6 +56,37 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_restricted_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'restricted@umindanao.edu.ph',
+            'restricted_at' => now(),
+        ]);
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_already_authenticated_restricted_users_are_logged_out_from_account_pages(): void
+    {
+        $user = User::factory()->create([
+            'restricted_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('dashboard'));
+
+        $response->assertRedirect(route('login'));
         $response->assertSessionHasErrors('email');
         $this->assertGuest();
     }

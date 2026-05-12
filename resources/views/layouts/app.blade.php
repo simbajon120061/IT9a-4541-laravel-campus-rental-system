@@ -25,26 +25,47 @@
         </script>
     </head>
     <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        @php
+            $usesListerSidebar = request()->routeIs('lister.*', 'my-listings', 'add-item', 'edit-item', 'rental-requests.*', 'rent-inventory-management')
+                || (
+                    request()->routeIs('profile.show')
+                    && request('portal') === 'lister'
+                    && Auth::check()
+                    && ! Auth::user()?->isAdministrator()
+                );
+        @endphp
+
         <x-banner />
 
-        <div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+        <div
+            class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
+            x-data="{ sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }"
+            x-init="$watch('sidebarCollapsed', (value) => localStorage.setItem('sidebarCollapsed', value ? 'true' : 'false'))"
+        >
             @livewire('navigation-menu')
 
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white dark:bg-slate-900 shadow dark:shadow-slate-900/50">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif
+            <div
+                class="{{ $usesListerSidebar ? 'lg:pt-20' : '' }}"
+                @if ($usesListerSidebar)
+                    :class="sidebarCollapsed ? 'lg:pl-24' : 'lg:pl-72'"
+                @endif
+            >
+                <!-- Page Heading -->
+                @if (isset($header))
+                    <header class="bg-white dark:bg-slate-900 shadow dark:shadow-slate-900/50">
+                        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
+                    </header>
+                @endif
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+                <!-- Page Content -->
+                <main>
+                    {{ $slot }}
+                </main>
 
-            <x-site-footer />
+                <x-site-footer />
+            </div>
         </div>
 
         @stack('modals')

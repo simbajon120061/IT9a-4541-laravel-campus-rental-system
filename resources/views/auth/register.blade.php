@@ -79,7 +79,7 @@
                             <div class="grid grid-cols-1 gap-6">
                                 <div class="space-y-2" pt-4>
                                     <x-label for="phone_number" value="{{ __('Phone Number') }}" class="text-sm font-semibold text-slate-700 dark:text-slate-200" />
-                                    <x-input id="phone_number" class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white" type="tel" name="phone_number" :value="old('phone_number')" required autocomplete="tel" placeholder="09123456789" />
+                                    <x-input id="phone_number" class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white" type="tel" name="phone_number" :value="old('phone_number')" required maxlength="11" inputmode="numeric" pattern="[0-9]{11}" autocomplete="tel" placeholder="09123456789" />
                                 </div>
                             </div>
 
@@ -138,7 +138,7 @@
 
                         <div class="mt-7 border-t border-slate-100 pt-6 text-center text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
                             Already have an account?
-                            <a href="{{ route('login') }}" class="font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-300">Sign in</a>
+                            <a href="{{ route('login.options') }}" class="font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-300">Sign in</a>
                         </div>
                     </div>
                 </div>

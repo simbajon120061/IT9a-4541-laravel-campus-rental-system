@@ -31,7 +31,7 @@ class CreateNewUser implements CreatesNewUsers
                 'unique:users',
                 'ends_with:@umindanao.edu.ph',
             ],
-            'phone_number' => ['required', 'string', 'max:30'],
+            'phone_number' => ['required', 'digits:11'],
             'course' => ['required', 'string', Rule::in(User::PROGRAMS)],
             'year_level' => ['required', 'string', Rule::in(User::SCHOOL_LEVELS)],
             'password' => $this->passwordRules(),

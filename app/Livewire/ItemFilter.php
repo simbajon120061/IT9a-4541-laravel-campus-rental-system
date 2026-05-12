@@ -73,6 +73,7 @@ class ItemFilter extends Component
         $itemsQuery = Item::query()
             ->select(['id', 'user_id', 'name', 'description', 'price', 'status', 'category_id', 'image_path', 'created_at'])
             ->with(['categoryRecord', 'user'])
+            ->visibleToPublic()
             ->when($this->search, fn ($q) => $q->where('name', 'like', '%'.$this->search.'%'))
             ->when($this->category, fn ($q) => $q->where('category_id', $this->category))
             ->when($this->maxPrice, function (Builder $q): Builder {

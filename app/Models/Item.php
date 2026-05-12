@@ -81,6 +81,11 @@ class Item extends Model
         return $query->where('status', 'available');
     }
 
+    public function scopeVisibleToPublic(Builder $query): Builder
+    {
+        return $query->whereHas('user', fn (Builder $query): Builder => $query->whereNull('restricted_at'));
+    }
+
     public function categoryName(): string
     {
         return $this->categoryRecord?->name ?? 'Other';

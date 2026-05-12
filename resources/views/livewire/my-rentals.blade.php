@@ -125,7 +125,7 @@
                     @if($filterStatus === 'all')
                         <h3 class="mt-4 text-xl font-semibold text-gray-900">No rentals yet</h3>
                         <p class="mt-2 text-gray-600 mb-8">Start browsing items available for rent.</p>
-                        <a href="{{ route('home') }}" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                        <a href="{{ route('renter.marketplace') }}" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
@@ -155,6 +155,7 @@
                                 <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Rental Period</th>
                                 <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-slate-300">Days Left</th>
                                 <th class="px-6 py-4 text-right text-sm font-semibold text-gray-700 dark:text-slate-300">Total Price</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-slate-300">Payment Status</th>
                                 <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-slate-300">Status</th>
                                 <th class="px-6 py-4 text-right text-sm font-semibold text-gray-700 dark:text-slate-300">Action</th>
                             </tr>
@@ -170,6 +171,19 @@
                                     $isDueSoon = $rental->status === 'active' && ! $isOnProcess && $daysLeft >= 0 && $daysLeft <= 7;
                                     $isOverdue = $daysLeft < 0;
                                     $rowClass = $isDueSoon ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40' : ($isOverdue ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40' : 'hover:bg-gray-50 dark:hover:bg-slate-800/60');
+                                    $paidAmount = (float) ($rental->paid_amount ?? 0);
+                                    $totalPrice = (float) $rental->total_price;
+                                    $balanceAmount = max(0, $totalPrice - $paidAmount);
+                                    $paymentStatusLabel = match ($rental->payment_status) {
+                                        'fully_paid' => 'Fully Paid',
+                                        'partial' => 'Partial',
+                                        default => 'Unpaid',
+                                    };
+                                    $paymentStatusClass = match ($rental->payment_status) {
+                                        'fully_paid' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+                                        'partial' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+                                        default => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+                                    };
                                 @endphp
                                 <tr class="{{ $rowClass }} border-b border-gray-200 transition-colors duration-200 dark:border-slate-700">
                                     <!-- Item Name -->
@@ -262,6 +276,20 @@
                                     <!-- Total Price -->
                                     <td class="px-6 py-4 text-right">
                                         <p class="text-sm font-bold text-gray-900 dark:text-slate-100">₱{{ number_format($rental->total_price, 2) }}</p>
+                                    </td>
+
+                                    <td class="px-6 py-4 text-center">
+                                        <div class="flex flex-col items-center gap-1">
+                                            <span class="{{ $paymentStatusClass }} inline-flex rounded-full px-3 py-1 text-xs font-semibold">
+                                                {{ $paymentStatusLabel }}
+                                            </span>
+                                            <p class="whitespace-nowrap text-xs font-medium text-slate-500 dark:text-slate-400">
+                                                Balance: &#8369;{{ number_format($balanceAmount, 2) }}
+                                            </p>
+                                            <p class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+                                                Paid &#8369;{{ number_format($paidAmount, 2) }} / &#8369;{{ number_format($totalPrice, 2) }}
+                                            </p>
+                                        </div>
                                     </td>
 
                                     <!-- Status -->

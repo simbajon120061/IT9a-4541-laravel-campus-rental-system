@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ class User extends Authenticatable
     use HasFactory;
     use HasProfilePhoto;
     use Notifiable;
+    use SoftDeletes;
     use TwoFactorAuthenticatable;
 
     public const array PROGRAMS = [
@@ -77,6 +79,8 @@ class User extends Authenticatable
             'is_verified_student' => 'boolean',
             'is_admin' => 'boolean',
             'warning_count' => 'integer',
+            'restricted_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 
@@ -120,6 +124,24 @@ class User extends Authenticatable
     public function isAdministrator(): bool
     {
         return (bool) $this->is_admin;
+    }
+
+    public function isRestricted(): bool
+    {
+        return ! $this->trashed() && $this->restricted_at !== null;
+    }
+
+    public function accountStatusLabel(): string
+    {
+        if ($this->trashed()) {
+            return 'Deactivated';
+        }
+
+        if ($this->isRestricted()) {
+            return 'Restricted';
+        }
+
+        return 'Active';
     }
 
     public function getProfilePhotoUrlAttribute(): string

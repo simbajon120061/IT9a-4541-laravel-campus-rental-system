@@ -7,7 +7,7 @@
                     {{ $isOwner ? 'Review requester details and decide to grant or reject.' : 'Review your rental request details and status.' }}
                 </p>
             </div>
-            <a href="{{ $isOwner ? route('rent-inventory-management') : route('my-rentals') }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+            <a href="{{ $isOwner ? route('lister.inventory') : route('renter.my-rentals') }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
                 {{ $isOwner ? 'Go to Rent Inventory' : 'Back to My Rentals' }}
             </a>
         </div>
@@ -27,7 +27,25 @@
         <div class="grid gap-6 lg:grid-cols-3">
             <div class="lg:col-span-2">
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-lg font-bold text-slate-900">Request Information</h2>
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <h2 class="text-lg font-bold text-slate-900">Request Information</h2>
+                        @if ($isOwner && $rental->status === 'pending')
+                            @if ($isEditingSchedule)
+                                <div class="flex gap-2">
+                                    <button wire:click="updateSchedule" class="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">
+                                        Save Dates
+                                    </button>
+                                    <button wire:click="cancelScheduleEdit" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400">
+                                        Cancel
+                                    </button>
+                                </div>
+                            @else
+                                <button wire:click="editSchedule" class="rounded-lg border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50">
+                                    Edit Dates
+                                </button>
+                            @endif
+                        @endif
+                    </div>
                     <dl class="mt-4 grid gap-4 sm:grid-cols-2">
                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                             <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Item</dt>
@@ -49,11 +67,25 @@
                         </div>
                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                             <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Start Date</dt>
-                            <dd class="mt-2 text-sm font-semibold text-slate-900">{{ $rental->start_date->format('M d, Y') }}</dd>
+                            <dd class="mt-2 text-sm font-semibold text-slate-900">
+                                @if ($isEditingSchedule)
+                                    <input type="date" wire:model="editableStartDate" class="w-full rounded-md border-slate-300 text-sm font-semibold focus:border-blue-500 focus:ring-blue-500">
+                                    @error('editableStartDate') <p class="mt-1 text-xs font-medium text-rose-600">{{ $message }}</p> @enderror
+                                @else
+                                    {{ $rental->start_date->format('M d, Y') }}
+                                @endif
+                            </dd>
                         </div>
                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                             <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">End Date</dt>
-                            <dd class="mt-2 text-sm font-semibold text-slate-900">{{ $rental->end_date->format('M d, Y') }}</dd>
+                            <dd class="mt-2 text-sm font-semibold text-slate-900">
+                                @if ($isEditingSchedule)
+                                    <input type="date" wire:model="editableEndDate" class="w-full rounded-md border-slate-300 text-sm font-semibold focus:border-blue-500 focus:ring-blue-500">
+                                    @error('editableEndDate') <p class="mt-1 text-xs font-medium text-rose-600">{{ $message }}</p> @enderror
+                                @else
+                                    {{ $rental->end_date->format('M d, Y') }}
+                                @endif
+                            </dd>
                         </div>
                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                             <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Days Requested</dt>

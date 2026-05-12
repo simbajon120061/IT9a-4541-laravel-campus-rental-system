@@ -251,4 +251,45 @@ class MyRentalsFilterVisibilityTest extends TestCase
             ->assertSee('Maria Santos')
             ->assertDontSee('John Cruz');
     }
+
+    public function test_my_rentals_table_shows_payment_status_and_balance(): void
+    {
+        $renter = User::factory()->create();
+        $owner = User::factory()->create();
+
+        $category = Category::query()->firstOrCreate(
+            ['slug' => 'electronics-payment-status'],
+            ['name' => 'Electronics', 'icon' => 'chip', 'is_active' => true]
+        );
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Nikon DSLR Camera',
+            'description' => 'Camera rental',
+            'price' => 200,
+            'status' => 'available',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(4),
+            'total_price' => 600,
+            'paid_amount' => 200,
+            'payment_status' => Rental::PAYMENT_STATUS_PARTIAL,
+            'status' => Rental::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($renter);
+
+        Livewire::test(MyRentals::class)
+            ->assertSee('Payment Status')
+            ->assertSee('Partial')
+            ->assertSee('Balance:')
+            ->assertSee('400.00')
+            ->assertSee('200.00')
+            ->assertSee('600.00');
+    }
 }

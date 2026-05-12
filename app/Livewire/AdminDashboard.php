@@ -6,6 +6,8 @@ use App\Models\Item;
 use App\Models\Rental;
 use App\Models\Report;
 use App\Models\User;
+use App\Notifications\AccountRestrictedNotification;
+use App\Notifications\ReportActionTakenNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -87,11 +89,21 @@ class AdminDashboard extends Component
         }
 
         DB::transaction(function () use ($report, $targetUser): void {
+            $targetUser->forceFill([
+                'restricted_at' => now(),
+                'restricted_by' => Auth::id(),
+            ])->save();
+
+            $targetUser->notify(new AccountRestrictedNotification(
+                reportId: $report->id,
+                reason: $report->reason,
+                adminMessage: trim($this->adminNotes[$report->id] ?? '') ?: null,
+            ));
+
             $this->completeReport($report, Report::ACTION_ACCOUNT_REMOVED);
-            $targetUser->delete();
         });
 
-        session()->flash('message', 'Account removed and report marked reviewed.');
+        session()->flash('message', 'Account restricted and report marked reviewed.');
     }
 
     /**
@@ -127,19 +139,46 @@ class AdminDashboard extends Component
         return Report::query()
             ->whereKey($reportId)
             ->where('status', Report::STATUS_PENDING)
-            ->with(['reportedUser', 'reportedItem.user', 'reportedMessage.sender'])
+            ->with(['reporter', 'reportedUser', 'reportedItem.user', 'reportedMessage.sender'])
             ->firstOrFail();
     }
 
     private function completeReport(Report $report, string $action): void
     {
+        $adminMessage = trim($this->adminNotes[$report->id] ?? '') ?: null;
+
         $report->update([
             'status' => Report::STATUS_REVIEWED,
             'reviewed_by' => Auth::id(),
             'admin_action' => $action,
-            'admin_notes' => trim($this->adminNotes[$report->id] ?? '') ?: null,
+            'admin_notes' => $adminMessage,
             'reviewed_at' => now(),
         ]);
+
+        $report->loadMissing(['reporter', 'reportedItem.user', 'reportedMessage.sender', 'reportedUser']);
+        $itemName = $report->reportedItem?->name;
+
+        $report->reporter?->notify(new ReportActionTakenNotification(
+            reportId: $report->id,
+            audience: 'reporter',
+            action: $action,
+            reason: $report->reason,
+            adminMessage: $adminMessage,
+            itemName: $itemName,
+        ));
+
+        $targetUser = $report->targetUser();
+
+        if ($targetUser && (int) $targetUser->id !== (int) $report->reporter_id) {
+            $targetUser->notify(new ReportActionTakenNotification(
+                reportId: $report->id,
+                audience: 'target',
+                action: $action,
+                reason: $report->reason,
+                adminMessage: $adminMessage,
+                itemName: $itemName,
+            ));
+        }
 
         unset($this->adminNotes[$report->id]);
     }

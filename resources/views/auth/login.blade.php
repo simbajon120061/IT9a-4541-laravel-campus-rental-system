@@ -1,4 +1,8 @@
 <x-guest-layout>
+    @php
+        $portal = $portal ?? null;
+    @endphp
+
     <div class="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100">
         <div class="mx-auto grid min-h-screen max-w-7xl grid-cols-1 lg:grid-cols-2">
             <section class="hidden border-r border-slate-200 bg-white px-10 py-12 dark:border-slate-800 dark:bg-slate-900 lg:flex lg:flex-col lg:justify-between xl:px-14">
@@ -46,8 +50,13 @@
 
                     <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-950/40 sm:p-10">
                         <div>
-                            <h2 class="text-3xl font-extrabold tracking-normal text-slate-950 dark:text-white">Sign in</h2>
-                            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Use your University of Mindanao email to continue.</p>
+                            <p class="text-sm font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300">
+                                {{ $portal === 'lister' ? 'Lister Portal' : ($portal === 'renter' ? 'Renter Portal' : 'Campus Portal') }}
+                            </p>
+                            <h2 class="mt-2 text-3xl font-extrabold tracking-normal text-slate-950 dark:text-white">Sign in</h2>
+                            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                {{ $portal === 'lister' ? 'Access your Lister Account.' : ($portal === 'renter' ? 'Access your Renter Account.' : 'Use your University of Mindanao email to continue.') }}
+                            </p>
                         </div>
 
                         <x-validation-errors class="mt-6 text-left" />
@@ -85,6 +94,7 @@
                         </form>
 
                         <div class="mt-7 border-t border-slate-100 pt-6 text-center text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                            <a href="{{ route('login.options') }}" class="mb-4 block font-bold text-slate-700 transition hover:text-slate-950 dark:text-slate-200 dark:hover:text-white">Choose another portal</a>
                             Don't have an account?
                             <a href="{{ route('register') }}" class="font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-300">Create one</a>
                         </div>
