@@ -207,12 +207,23 @@
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
                                             <label class="block text-xs text-slate-600 mb-1">Start Date</label>
-                                            <input type="date" wire:model="startDate" class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <input
+                                                type="date"
+                                                wire:model.live="startDate"
+                                                min="{{ $minimumStartDate }}"
+                                                class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+                                            >
                                             @error('startDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                                         </div>
                                         <div>
                                             <label class="block text-xs text-slate-600 mb-1">End Date</label>
-                                            <input type="date" wire:model="endDate" class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <input
+                                                type="date"
+                                                wire:model="endDate"
+                                                min="{{ $minimumEndDate }}"
+                                                max="{{ $maximumEndDate }}"
+                                                class="w-full rounded-md border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500"
+                                            >
                                             @error('endDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                                         </div>
                                     </div>
@@ -237,6 +248,13 @@
                                     >
                                         Send Rental Request
                                     </button>
+                                    @if($rentalRequestNotice)
+                                        <x-floating-action-notice
+                                            :message="$rentalRequestNotice"
+                                            :tone="str_contains($rentalRequestNotice, 'successfully') ? 'success' : 'warning'"
+                                            wire:key="rental-request-notice-{{ $noticeToken }}"
+                                        />
+                                    @endif
                                 </div>
                             @else
                                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
@@ -280,6 +298,13 @@
                                         <button wire:click="submitReport" class="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black">
                                             Submit Report
                                         </button>
+                                        @if($reportNotice)
+                                            <x-floating-action-notice
+                                                :message="$reportNotice"
+                                                :tone="str_contains($reportNotice, 'submitted') ? 'success' : 'warning'"
+                                                wire:key="item-report-notice-{{ $noticeToken }}"
+                                            />
+                                        @endif
                                     </div>
                                 </div>
                             @endif

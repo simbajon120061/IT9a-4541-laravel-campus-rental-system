@@ -41,6 +41,14 @@ class OwnerRentalRequestView extends Component
 
     public string $reportDetails = '';
 
+    public string $decisionNotice = '';
+
+    public string $messageNotice = '';
+
+    public string $reportNotice = '';
+
+    public int $noticeToken = 0;
+
     public function mount(Rental $rental): void
     {
         abort_unless(Auth::check(), 403);
@@ -88,6 +96,7 @@ class OwnerRentalRequestView extends Component
 
         $this->reset('messageText');
         session()->flash('message', 'Message sent.');
+        $this->showNotice('messageNotice', 'Message sent.');
     }
 
     public function grantRequest(): void
@@ -113,6 +122,7 @@ class OwnerRentalRequestView extends Component
 
         $this->rental->refresh();
         session()->flash('message', 'Rental request granted.');
+        $this->showNotice('decisionNotice', 'Rental request granted.');
     }
 
     public function rejectRequest(): void
@@ -137,6 +147,7 @@ class OwnerRentalRequestView extends Component
 
         $this->rental->refresh();
         session()->flash('message', 'Rental request rejected.');
+        $this->showNotice('decisionNotice', 'Rental request rejected.');
     }
 
     public function editSchedule(): void
@@ -273,6 +284,7 @@ class OwnerRentalRequestView extends Component
 
         $this->cancelReport();
         session()->flash('message', 'Report submitted. An admin will verify it.');
+        $this->showNotice('reportNotice', 'Report submitted. An admin will verify it.');
     }
 
     private function startReport(string $type): void
@@ -290,6 +302,12 @@ class OwnerRentalRequestView extends Component
     {
         $this->editableStartDate = $this->rental->start_date->toDateString();
         $this->editableEndDate = $this->rental->end_date->toDateString();
+    }
+
+    private function showNotice(string $property, string $message): void
+    {
+        $this->{$property} = $message;
+        $this->noticeToken++;
     }
 
     public function render(): View

@@ -116,6 +116,7 @@
                                 @php
                                     $seconds = $rental->start_date->diffInSeconds($rental->end_date, false);
                                     $days = max(1, (int) ceil($seconds / 86400));
+                                    $remainingBalance = max(0, round((float) $rental->total_price - (float) ($rental->paid_amount ?? 0), 2));
                                     $secondsLeft = now()->diffInSeconds($rental->end_date, false);
                                     $daysLeft = $secondsLeft >= 0
                                         ? (int) ceil($secondsLeft / 86400)
@@ -125,8 +126,21 @@
                                 @endphp
                                 <tr class="border-t border-slate-200 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-300">
                                     <td class="px-5 py-4">
-                                        <div class="font-semibold text-slate-900 dark:text-slate-100">{{ $rental->item->name }}</div>
-                                        <div class="text-xs text-slate-500 dark:text-slate-400">{{ $rental->item->categoryRecord?->name ?? 'No category' }}</div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                                                @if ($rental->item->imageUrl())
+                                                    <img src="{{ $rental->item->imageUrl() }}" alt="{{ $rental->item->name }}" class="h-full w-full object-cover">
+                                                @else
+                                                    <svg class="h-6 w-6 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                @endif
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="font-semibold text-slate-900 dark:text-slate-100">{{ $rental->item->name }}</div>
+                                                <div class="text-xs text-slate-500 dark:text-slate-400">{{ $rental->item->categoryRecord?->name ?? 'No category' }}</div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="px-5 py-4">{{ $rental->renter->name }}</td>
                                     <td class="px-5 py-4">&#8369;{{ number_format($rental->item->price, 2) }}</td>
@@ -152,10 +166,14 @@
                                                         type="number"
                                                         step="0.01"
                                                         min="0.01"
+                                                        max="{{ $remainingBalance }}"
                                                         wire:model.defer="paymentAmounts.{{ $rental->id }}"
                                                         class="w-24 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                                         placeholder="Amount"
                                                     >
+                                                    <button wire:click="fillFullPaymentAmount({{ $rental->id }})" type="button" class="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-900/30 dark:text-blue-200">
+                                                        Pay in Full
+                                                    </button>
                                                     <button wire:click="recordPayment({{ $rental->id }})" class="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-blue-700">
                                                         Save
                                                     </button>

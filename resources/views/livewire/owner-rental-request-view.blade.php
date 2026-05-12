@@ -97,6 +97,28 @@
                         </div>
                     </dl>
                 </div>
+
+                <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="flex items-center justify-between gap-3 px-6 py-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Rented Item</h2>
+                            <p class="text-sm text-slate-600">{{ $rental->item->name }}</p>
+                        </div>
+                    </div>
+                    <div class="aspect-[16/9] bg-slate-100">
+                        @if ($rental->item->imageUrl())
+                            <img
+                                src="{{ $rental->item->imageUrl() }}"
+                                alt="{{ $rental->item->name }} rental item image"
+                                class="h-full w-full object-cover"
+                            >
+                        @else
+                            <div class="flex h-full w-full items-center justify-center bg-slate-100 text-sm font-semibold text-slate-500">
+                                No item image uploaded
+                            </div>
+                        @endif
+                    </div>
+                </div>
             </div>
 
             <div class="space-y-6">
@@ -134,6 +156,13 @@
                         <p class="mt-3 text-sm text-slate-600">Only the item owner can approve or reject this request. You can monitor updates here.</p>
                     @else
                         <p class="mt-3 text-sm text-slate-600">Request already processed. The requester has been notified automatically.</p>
+                    @endif
+                    @if($decisionNotice)
+                        <x-floating-action-notice
+                            :message="$decisionNotice"
+                            :tone="str_contains($decisionNotice, 'rejected') ? 'danger' : 'success'"
+                            wire:key="decision-notice-{{ $noticeToken }}"
+                        />
                     @endif
                 </div>
 
@@ -209,6 +238,13 @@
                         Send
                     </button>
                 </div>
+                @if($messageNotice)
+                    <x-floating-action-notice
+                        :message="$messageNotice"
+                        class="sm:ml-auto sm:w-32"
+                        wire:key="message-notice-{{ $noticeToken }}"
+                    />
+                @endif
             </form>
 
             @if ($showReportForm)
@@ -235,6 +271,12 @@
                         <button wire:click="submitReport" class="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black dark:bg-rose-600 dark:hover:bg-rose-700">
                             Submit Report
                         </button>
+                        @if($reportNotice)
+                            <x-floating-action-notice
+                                :message="$reportNotice"
+                                wire:key="rental-report-notice-{{ $noticeToken }}"
+                            />
+                        @endif
                     </div>
                 </div>
             @endif

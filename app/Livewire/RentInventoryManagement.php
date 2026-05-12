@@ -95,8 +95,12 @@ class RentInventoryManagement extends Component
             ->whereIn('status', [Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE])
             ->findOrFail($rentalId);
 
+        $remainingBalance = $this->remainingBalance($rental);
+
         $this->validate([
-            "paymentAmounts.$rentalId" => ['required', 'numeric', 'gt:0'],
+            "paymentAmounts.$rentalId" => ['required', 'numeric', 'gt:0', 'max:'.$remainingBalance],
+        ], [
+            "paymentAmounts.$rentalId.max" => 'The payment must not exceed the remaining balance.',
         ]);
 
         $paymentAmount = (float) ($this->paymentAmounts[$rentalId] ?? 0);
@@ -105,6 +109,18 @@ class RentInventoryManagement extends Component
 
         $this->paymentAmounts[$rentalId] = '';
         session()->flash('message', 'Payment recorded successfully.');
+    }
+
+    public function fillFullPaymentAmount(int $rentalId): void
+    {
+        abort_unless(Auth::check(), 403);
+
+        $rental = Rental::query()
+            ->whereHas('item', fn ($query) => $query->where('user_id', Auth::id()))
+            ->whereIn('status', [Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE])
+            ->findOrFail($rentalId);
+
+        $this->paymentAmounts[$rentalId] = number_format($this->remainingBalance($rental), 2, '.', '');
     }
 
     public function markAsRented(int $rentalId): void
@@ -204,5 +220,10 @@ class RentInventoryManagement extends Component
             'pendingCount' => $pendingCount,
             'approvedCount' => $approvedCount,
         ]);
+    }
+
+    private function remainingBalance(Rental $rental): float
+    {
+        return max(0, round((float) $rental->total_price - (float) ($rental->paid_amount ?? 0), 2));
     }
 }

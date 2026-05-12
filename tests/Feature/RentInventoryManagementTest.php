@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\Rental;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -19,9 +20,10 @@ class RentInventoryManagementTest extends TestCase
     {
         $owner = User::factory()->create();
         $borrower = User::factory()->create();
-        $category = Category::query()->create([
-            'name' => 'Books',
+        $category = Category::query()->firstOrCreate([
             'slug' => 'books',
+        ], [
+            'name' => 'Books',
             'icon' => 'book',
             'is_active' => true,
         ]);
@@ -66,13 +68,14 @@ class RentInventoryManagementTest extends TestCase
         $this->assertSame(40.0, (float) $rental->paid_amount);
     }
 
-    public function test_owner_can_mark_approved_rental_as_rented(): void
+    public function test_owner_can_fill_remaining_payment_amount(): void
     {
         $owner = User::factory()->create();
         $borrower = User::factory()->create();
-        $category = Category::query()->create([
-            'name' => 'Books',
+        $category = Category::query()->firstOrCreate([
             'slug' => 'books',
+        ], [
+            'name' => 'Books',
             'icon' => 'book',
             'is_active' => true,
         ]);
@@ -91,6 +94,136 @@ class RentInventoryManagementTest extends TestCase
             'item_id' => $item->id,
             'renter_id' => $borrower->id,
             'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 100,
+            'paid_amount' => 40,
+            'payment_status' => 'partial',
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->call('fillFullPaymentAmount', $rental->id)
+            ->assertSet("paymentAmounts.{$rental->id}", '60.00');
+    }
+
+    public function test_owner_cannot_record_payment_above_remaining_balance(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 100,
+            'paid_amount' => 40,
+            'payment_status' => 'partial',
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->set("paymentAmounts.{$rental->id}", '70')
+            ->call('recordPayment', $rental->id)
+            ->assertHasErrors(["paymentAmounts.{$rental->id}" => 'max']);
+
+        $rental->refresh();
+
+        $this->assertSame('partial', $rental->payment_status);
+        $this->assertSame(40.0, (float) $rental->paid_amount);
+    }
+
+    public function test_item_image_is_shown_in_rent_inventory_table(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('item-photos/book.jpg', 'fake image contents');
+
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+            'image_path' => 'item-photos/book.jpg',
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 100,
+            'paid_amount' => 0,
+            'payment_status' => 'outstanding',
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('/storage/item-photos/book.jpg', false)
+            ->assertSee('Linear Algebra Book');
+    }
+
+    public function test_owner_can_mark_approved_rental_as_rented(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->subDay(),
             'end_date' => now()->addDays(3),
             'total_price' => 100,
             'paid_amount' => 100,
@@ -115,9 +248,10 @@ class RentInventoryManagementTest extends TestCase
     {
         $owner = User::factory()->create();
         $borrower = User::factory()->create();
-        $category = Category::query()->create([
-            'name' => 'Books',
+        $category = Category::query()->firstOrCreate([
             'slug' => 'books',
+        ], [
+            'name' => 'Books',
             'icon' => 'book',
             'is_active' => true,
         ]);
@@ -155,9 +289,10 @@ class RentInventoryManagementTest extends TestCase
     {
         $owner = User::factory()->create();
         $borrower = User::factory()->create();
-        $category = Category::query()->create([
-            'name' => 'Books',
+        $category = Category::query()->firstOrCreate([
             'slug' => 'books',
+        ], [
+            'name' => 'Books',
             'icon' => 'book',
             'is_active' => true,
         ]);

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\AdminUserSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -36,5 +37,19 @@ class AdminUserSeederTest extends TestCase
 
         $this->assertTrue($admin->isAdministrator());
         $this->assertTrue(Hash::check('password', $admin->password));
+    }
+
+    public function test_database_seeder_uses_umindanao_accounts(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertDatabaseHas('users', [
+            'email' => AdminUserSeeder::Email,
+            'is_admin' => true,
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@umindanao.edu.ph',
+        ]);
     }
 }

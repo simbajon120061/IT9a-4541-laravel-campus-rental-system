@@ -26,6 +26,7 @@ class RentalMessagingTest extends TestCase
             ->set('messageText', 'Bring it tomorrow')
             ->call('sendMessage')
             ->assertSee('Message sent.')
+            ->assertSee('shadow-lg', false)
             ->assertSee('Bring it tomorrow');
 
         $this->assertDatabaseHas('rental_messages', [

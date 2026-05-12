@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\RentalRequestDecisionNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -29,7 +30,8 @@ class OwnerRentalRequestViewTest extends TestCase
             ->assertSee($borrower->name)
             ->assertSee($borrower->email)
             ->call('grantRequest')
-            ->assertSee('Rental request granted.');
+            ->assertSee('Rental request granted.')
+            ->assertSee('shadow-lg', false);
 
         $rental->refresh();
 
@@ -54,7 +56,8 @@ class OwnerRentalRequestViewTest extends TestCase
 
         Livewire::test(OwnerRentalRequestView::class, ['rental' => $rental])
             ->call('rejectRequest')
-            ->assertSee('Rental request rejected.');
+            ->assertSee('Rental request rejected.')
+            ->assertSee('shadow-lg', false);
 
         $rental->refresh();
 
@@ -113,6 +116,22 @@ class OwnerRentalRequestViewTest extends TestCase
             ->set('editableEndDate', now()->addDays(3)->toDateString())
             ->call('updateSchedule')
             ->assertHasErrors(['editableEndDate' => ['after']]);
+    }
+
+    public function test_request_view_shows_the_rented_item_image(): void
+    {
+        Storage::fake('public');
+
+        [, $borrower, $rental] = $this->createRentalRequest();
+        Storage::disk('public')->put('item-photos/projector.jpg', 'image-content');
+        $rental->item->update(['image_path' => 'item-photos/projector.jpg']);
+
+        $this->actingAs($borrower);
+
+        Livewire::test(OwnerRentalRequestView::class, ['rental' => $rental])
+            ->assertSee('Rented Item')
+            ->assertSee('/storage/item-photos/projector.jpg', false)
+            ->assertSee('Portable Projector rental item image');
     }
 
     public function test_due_tomorrow_alert_is_visible_for_active_rental_with_one_day_left(): void
