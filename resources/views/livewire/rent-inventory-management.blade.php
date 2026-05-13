@@ -95,9 +95,9 @@
             </div>
         @else
             <div class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70">
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[1080px]">
-                        <thead>
+                <div class="overflow-hidden">
+                    <table class="block w-full lg:table">
+                        <thead class="hidden lg:table-header-group">
                             <tr class="bg-slate-100/90 text-sm text-slate-700 dark:bg-slate-800/90 dark:text-slate-300">
                                 <th class="px-5 py-4 text-left font-semibold">Item</th>
                                 <th class="px-5 py-4 text-left font-semibold">Borrower</th>
@@ -111,7 +111,7 @@
                                 <th class="px-5 py-4 text-center font-semibold">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="block divide-y divide-slate-200 dark:divide-slate-700 lg:table-row-group">
                             @foreach ($rentals as $rental)
                                 @php
                                     $seconds = $rental->start_date->diffInSeconds($rental->end_date, false);
@@ -124,8 +124,9 @@
                                     $isOnProcess = $rental->status === 'approved' || ($rental->status === 'active' && $rental->start_date->isFuture());
                                     $dueSoon = $rental->status === 'active' && now()->between($rental->start_date, $rental->end_date) && $daysLeft <= 7;
                                 @endphp
-                                <tr class="border-t border-slate-200 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-300">
-                                    <td class="px-5 py-4">
+                                <tr class="block p-4 text-sm text-slate-700 dark:text-slate-300 lg:table-row lg:p-0">
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                        <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Item</p>
                                         <div class="flex items-center gap-3">
                                             <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                                                 @if ($rental->item->imageUrl())
@@ -142,13 +143,32 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-5 py-4">{{ $rental->renter->name }}</td>
-                                    <td class="px-5 py-4">&#8369;{{ number_format($rental->item->price, 2) }}</td>
-                                    <td class="px-5 py-4">{{ $rental->start_date->format('M d, Y') }}</td>
-                                    <td class="px-5 py-4">{{ $rental->end_date->format('M d, Y') }}</td>
-                                    <td class="px-5 py-4 text-center">{{ $days }}</td>
-                                    <td class="px-5 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">&#8369;{{ number_format($rental->total_price, 2) }}</td>
-                                    <td class="px-5 py-4 text-center">
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Borrower</p>
+                                        {{ $rental->renter->name }}
+                                    </td>
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Price/Day</p>
+                                        &#8369;{{ number_format($rental->item->price, 2) }}
+                                    </td>
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Start Date</p>
+                                        {{ $rental->start_date->format('M d, Y') }}
+                                    </td>
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">End Date</p>
+                                        {{ $rental->end_date->format('M d, Y') }}
+                                    </td>
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4 lg:text-center">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Days</p>
+                                        {{ $days }}
+                                    </td>
+                                    <td class="block py-2 font-semibold text-slate-900 dark:text-slate-100 lg:table-cell lg:px-5 lg:py-4 lg:text-right">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Total Cost</p>
+                                        &#8369;{{ number_format($rental->total_price, 2) }}
+                                    </td>
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4 lg:text-center">
+                                        <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Payment Status</p>
                                         <div class="space-y-2">
                                             <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold
                                                 @if ($rental->payment_status === 'fully_paid') bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200
@@ -161,14 +181,14 @@
                                                 &#8369;{{ number_format((float) $rental->paid_amount, 2) }} / &#8369;{{ number_format($rental->total_price, 2) }}
                                             </div>
                                             @if (in_array($rental->status, ['approved', 'active'], true) && $rental->payment_status !== 'fully_paid')
-                                                <div class="flex items-center justify-center gap-1">
+                                                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] lg:flex lg:items-center lg:justify-center lg:gap-1">
                                                     <input
                                                         type="number"
                                                         step="0.01"
                                                         min="0.01"
                                                         max="{{ $remainingBalance }}"
                                                         wire:model.defer="paymentAmounts.{{ $rental->id }}"
-                                                        class="w-24 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                                        class="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 lg:w-24"
                                                         placeholder="Amount"
                                                     >
                                                     <button wire:click="fillFullPaymentAmount({{ $rental->id }})" type="button" class="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-900/30 dark:text-blue-200">
@@ -184,7 +204,8 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="px-5 py-4 text-center">
+                                    <td class="block py-2 lg:table-cell lg:px-5 lg:py-4 lg:text-center">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Rental Status</p>
                                         @if ($rental->status === 'pending')
                                             <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Pending Request</span>
                                         @elseif ($isOnProcess)
@@ -195,16 +216,16 @@
                                             <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">Active Loan</span>
                                         @endif
                                     </td>
-                                    <td class="px-5 py-4 text-center">
+                                    <td class="block pt-3 lg:table-cell lg:px-5 lg:py-4 lg:text-center">
                                         @if ($rental->status === 'pending')
-                                            <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex items-center rounded-md bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:shadow-md">
+                                            <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-md bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:shadow-md lg:w-auto">
                                                 View Request
                                             </a>
                                         @elseif ($isOnProcess)
                                             @if ($rental->start_date->isFuture())
                                                 <span class="text-xs font-semibold text-blue-600 dark:text-blue-300">Starts {{ $rental->start_date->format('M d, Y') }}</span>
                                             @else
-                                                <button wire:click="markAsRented({{ $rental->id }})" class="inline-flex items-center rounded-md bg-gradient-to-r from-emerald-600 to-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:shadow-md">
+                                                <button wire:click="markAsRented({{ $rental->id }})" class="inline-flex w-full items-center justify-center rounded-md bg-gradient-to-r from-emerald-600 to-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:shadow-md lg:w-auto">
                                                     Mark as Rented
                                                 </button>
                                             @endif

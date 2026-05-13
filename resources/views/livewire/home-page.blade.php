@@ -1,44 +1,44 @@
 <div class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
     <nav x-data="{ open: false }" class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-900/85">
-    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex min-h-16 w-full max-w-none flex-wrap items-center gap-2 px-3 py-2 sm:h-16 sm:flex-nowrap sm:px-4 sm:py-0 lg:px-6">
         
-        <div class="flex flex-1 items-center">
+        <div class="flex min-w-0 items-center sm:flex-1">
             <a href="{{ route('renter.dashboard') }}" class="group flex items-center gap-3">
-                <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-300 group-hover:-translate-y-0.5">
-                    <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-600 text-white shadow-lg shadow-blue-600/25 transition-all duration-300 group-hover:-translate-y-0.5 sm:h-11 sm:w-11 sm:rounded-xl">
+                    <svg class="h-6 w-6 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 8-9-5-9 5m18 0-9 5m9-5v8l-9 5m0-8L3 8m9 5v8M3 8v8l9 5" />
                     </svg>
                 </span>
-                <span class="text-xl font-extrabold tracking-normal text-blue-600 sm:text-2xl dark:text-blue-400">Campus<span class="text-violet-600 dark:text-violet-400">Rent</span></span>
+                <span class="hidden truncate text-xl font-extrabold tracking-normal text-blue-600 sm:inline sm:text-2xl dark:text-blue-400">Campus<span class="text-violet-600 dark:text-violet-400">Rent</span></span>
             </a>
         </div>
 
-        <div class="hidden items-center sm:flex">
+        <div class="order-3 hidden w-full min-w-0 items-center overflow-x-auto border-t border-slate-100 pt-2 sm:order-none sm:flex sm:w-auto sm:flex-1 sm:justify-center sm:border-t-0 sm:pt-0">
             @auth
-                <div class="flex items-center gap-2 rounded-full bg-slate-50 px-2 py-1 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
-                    <a href="{{ route('renter.dashboard') }}" class="{{ request()->routeIs('dashboard', 'renter.dashboard') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100' }} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition">
+                <div class="flex min-w-max items-center gap-1 rounded-full bg-slate-50 p-1 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700 sm:min-w-0">
+                    <a href="{{ route('renter.dashboard') }}" class="{{ request()->routeIs('dashboard', 'renter.dashboard') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100' }} inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition xl:px-4" title="Renter Dashboard">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l8-8 8 8M5 10v10h14V10" />
                         </svg>
-                        Renter Dashboard
+                        <span class="hidden whitespace-nowrap xl:inline">Renter Dashboard</span>
                     </a>
-                    <a href="{{ route('renter.marketplace') }}" class="{{ request()->routeIs('home', 'renter.marketplace', 'categories.show') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100' }} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition">
+                    <a href="{{ route('renter.marketplace') }}" class="{{ request()->routeIs('home', 'renter.marketplace', 'categories.show') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100' }} inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition xl:px-4" title="Marketplace">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
-                        Marketplace
+                        <span class="hidden whitespace-nowrap xl:inline">Marketplace</span>
                     </a>
-                    <a href="{{ route('renter.my-rentals') }}" class="{{ request()->routeIs('my-rentals', 'renter.my-rentals') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100' }} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition">
+                    <a href="{{ route('renter.my-rentals') }}" class="{{ request()->routeIs('my-rentals', 'renter.my-rentals') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100' }} inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-full px-3 text-sm font-semibold transition xl:px-4" title="My Rentals">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        My Rentals
+                        <span class="hidden whitespace-nowrap xl:inline">My Rentals</span>
                     </a>
                 </div>
             @endauth
         </div>
 
-        <div class="hidden flex-1 items-center justify-end gap-3 sm:flex">
+        <div class="order-2 ml-auto flex items-center justify-end gap-2 sm:order-none sm:flex-1 sm:gap-3">
             @auth
                 @livewire('notifications-dropdown')
                 <a href="{{ route('renter.messages') }}" class="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 ring-1 ring-slate-200 transition hover:bg-white hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700 dark:hover:text-white" aria-label="Messages">
@@ -46,7 +46,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10.5h8M8 14h5m-8 5 3.5-3.5H18a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v5.5a3 3 0 0 0 2 2.83V19Z" />
                     </svg>
                 </a>
-                <x-dark-mode-toggle />
+                <x-dark-mode-toggle class="hidden sm:inline-flex" />
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button type="button" class="group inline-flex items-center rounded-full px-1 py-1 ring-1 ring-transparent transition hover:ring-slate-200 dark:hover:ring-slate-700">
@@ -78,24 +78,26 @@
                         </form>
                     </x-slot>
                 </x-dropdown>
+                <button @click="open = !open" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 sm:hidden" aria-label="Toggle navigation menu">
+                    <svg class="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path :class="{ 'hidden': open, 'inline-flex': !open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /><path :class="{ 'hidden': !open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             @else
                 <x-dark-mode-toggle />
                 <a href="{{ route('login.options') }}" class="text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">Sign In</a>
                 <a href="{{ route('register') }}" class="rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:-translate-y-0.5 hover:shadow-xl">Sign Up</a>
             @endauth
         </div>
-
-        <div class="flex items-center gap-2 sm:hidden">
-            <x-dark-mode-toggle />
-            <button @click="open = !open" class="inline-flex items-center justify-center rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200">
-                <svg class="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                    <path :class="{ 'hidden': open, 'inline-flex': !open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    <path :class="{ 'hidden': !open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
     </div>
 
+    @auth
+        <div x-show="open" x-cloak class="border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:hidden">
+            <div class="flex flex-col gap-2">
+                <a href="{{ route('renter.dashboard') }}" class="{{ request()->routeIs('dashboard', 'renter.dashboard') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800' }} rounded-lg px-4 py-3 text-sm font-bold">Renter Dashboard</a>
+                <a href="{{ route('renter.marketplace') }}" class="{{ request()->routeIs('home', 'renter.marketplace', 'categories.show') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800' }} rounded-lg px-4 py-3 text-sm font-bold">Marketplace</a>
+                <a href="{{ route('renter.my-rentals') }}" class="{{ request()->routeIs('my-rentals', 'renter.my-rentals') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800' }} rounded-lg px-4 py-3 text-sm font-bold">My Rentals</a>
+            </div>
+        </div>
+    @endauth
     </nav>
 
     <section class="relative overflow-hidden bg-gradient-to-br from-blue-700 via-violet-700 to-slate-900 text-white">

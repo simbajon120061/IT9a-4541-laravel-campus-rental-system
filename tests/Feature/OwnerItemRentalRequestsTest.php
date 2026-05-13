@@ -84,10 +84,12 @@ class OwnerItemRentalRequestsTest extends TestCase
         $this->actingAs($owner)
             ->get(route('rental-requests.item', $item))
             ->assertOk()
-            ->assertSee('Rental Requests')
+            ->assertSee('Item Rental History')
             ->assertSee($item->name)
             ->assertSee($renterOne->name)
             ->assertSee($renterTwo->name)
+            ->assertSee('Manage in Inventory')
+            ->assertSee(route('lister.inventory', ['filter' => 'approved']))
             ->assertSee(route('rental-requests.show', $requestOne))
             ->assertSee(route('rental-requests.show', $requestTwo))
             ->assertDontSee('Backup Item');

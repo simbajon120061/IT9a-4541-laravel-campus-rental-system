@@ -13,8 +13,47 @@
         </div>
 
         @if (session()->has('message'))
-            <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-                {{ session('message') }}
+            <x-floating-action-notice
+                :message="session('message')"
+                :tone="str_contains(session('message'), 'rejected') ? 'danger' : 'success'"
+                wire:key="rental-session-notice-{{ $noticeToken }}"
+            />
+        @endif
+
+        @if($reportNotice)
+            <x-floating-action-notice
+                :message="$reportNotice"
+                wire:key="rental-report-notice-{{ $noticeToken }}"
+            />
+        @endif
+
+        @if ($showReportForm)
+            <div class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50 px-4 py-6">
+                <div class="w-full max-w-md rounded-xl border border-rose-200 bg-white p-5 shadow-2xl dark:border-rose-900/60 dark:bg-slate-900">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            Report {{ $reportType === 'message' ? 'Message' : 'User' }}
+                        </p>
+                        <button wire:click="cancelReport" class="text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                            Cancel
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="mb-1 block text-xs text-slate-600 dark:text-slate-400">Reason</label>
+                            <input type="text" wire:model="reportReason" maxlength="120" class="w-full rounded-md border-slate-300 text-sm focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Example: harassment or unsafe behavior">
+                            @error('reportReason') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs text-slate-600 dark:text-slate-400">Details</label>
+                            <textarea wire:model="reportDetails" rows="3" class="w-full rounded-md border-slate-300 text-sm focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Share what admins should verify."></textarea>
+                            @error('reportDetails') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                        <button wire:click="submitReport" class="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black dark:bg-rose-600 dark:hover:bg-rose-700">
+                            Submit Report
+                        </button>
+                    </div>
+                </div>
             </div>
         @endif
 
@@ -247,39 +286,6 @@
                 @endif
             </form>
 
-            @if ($showReportForm)
-                <div class="mt-5 rounded-xl border border-rose-200 bg-white p-4 shadow-sm dark:border-rose-900/60 dark:bg-slate-900">
-                    <div class="mb-3 flex items-center justify-between gap-3">
-                        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            Report {{ $reportType === 'message' ? 'Message' : 'User' }}
-                        </p>
-                        <button wire:click="cancelReport" class="text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-                            Cancel
-                        </button>
-                    </div>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="mb-1 block text-xs text-slate-600 dark:text-slate-400">Reason</label>
-                            <input type="text" wire:model="reportReason" maxlength="120" class="w-full rounded-md border-slate-300 text-sm focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Example: harassment or unsafe behavior">
-                            @error('reportReason') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-xs text-slate-600 dark:text-slate-400">Details</label>
-                            <textarea wire:model="reportDetails" rows="3" class="w-full rounded-md border-slate-300 text-sm focus:border-rose-500 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" placeholder="Share what admins should verify."></textarea>
-                            @error('reportDetails') <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
-                        </div>
-                        <button wire:click="submitReport" class="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black dark:bg-rose-600 dark:hover:bg-rose-700">
-                            Submit Report
-                        </button>
-                        @if($reportNotice)
-                            <x-floating-action-notice
-                                :message="$reportNotice"
-                                wire:key="rental-report-notice-{{ $noticeToken }}"
-                            />
-                        @endif
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
 </div>

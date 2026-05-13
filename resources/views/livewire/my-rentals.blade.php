@@ -146,9 +146,9 @@
         @else
             <!-- Table Container -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:bg-slate-900 dark:border-slate-700 dark:shadow-slate-900/40">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
+                <div class="overflow-hidden">
+                    <table class="block w-full xl:table">
+                        <thead class="hidden xl:table-header-group">
                             <tr class="bg-gray-100 border-b border-gray-200 dark:bg-slate-800 dark:border-slate-700">
                                 <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Item</th>
                                 <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Owner</th>
@@ -160,7 +160,7 @@
                                 <th class="px-6 py-4 text-right text-sm font-semibold text-gray-700 dark:text-slate-300">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="block divide-y divide-gray-200 dark:divide-slate-700 xl:table-row-group">
                             @foreach($rentals as $rental)
                                 @php
                                     $secondsLeft = now()->diffInSeconds($rental->end_date, false);
@@ -185,9 +185,10 @@
                                         default => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
                                     };
                                 @endphp
-                                <tr class="{{ $rowClass }} border-b border-gray-200 transition-colors duration-200 dark:border-slate-700">
+                                <tr class="{{ $rowClass }} block p-4 transition-colors duration-200 xl:table-row xl:p-0">
                                     <!-- Item Name -->
-                                    <td class="px-6 py-4">
+                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4">
+                                        <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Item</p>
                                         <div class="flex items-center gap-3">
                                             @if($rental->item->imageUrl())
                                                 <img class="w-12 h-12 rounded-lg object-cover" src="{{ $rental->item->imageUrl() }}" alt="{{ $rental->item->name }}">
@@ -199,14 +200,15 @@
                                                 </div>
                                             @endif
                                             <div>
-                                                <p class="text-sm font-semibold text-gray-900">{{ $rental->item->name }}</p>
-                                                <p class="text-xs text-gray-500">{{ $rental->item->categoryRecord?->name ?? 'No category' }}</p>
+                                                <p class="text-sm font-semibold text-gray-900 dark:text-slate-100">{{ $rental->item->name }}</p>
+                                                <p class="text-xs text-gray-500 dark:text-slate-400">{{ $rental->item->categoryRecord?->name ?? 'No category' }}</p>
                                             </div>
                                         </div>
                                     </td>
 
                                     <!-- Owner -->
-                                    <td class="px-6 py-4">
+                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4">
+                                        <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Owner</p>
                                         <div class="flex items-center gap-2">
                                             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                                                 <span class="text-xs font-semibold text-blue-600">
@@ -216,21 +218,23 @@
                                                     {{ $initials }}
                                                 </span>
                                             </div>
-                                            <p class="text-sm font-medium text-gray-900">{{ $rental->item->user->name }}</p>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-slate-100">{{ $rental->item->user->name }}</p>
                                         </div>
                                     </td>
 
                                     <!-- Rental Period -->
-                                    <td class="px-6 py-4">
+                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Rental Period</p>
                                         <div class="text-sm">
                                             <p class="text-gray-900">{{ $rental->start_date->format('M d') }} → {{ $rental->end_date->format('M d, Y') }}</p>
-                                            <p class="text-xs text-gray-500">{{ $rental->start_date->format('Y') }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400">{{ $rental->start_date->format('Y') }}</p>
                                         </div>
                                     </td>
 
                                     <!-- Days Left -->
-                                    <td class="px-6 py-4">
-                                        <div class="text-center">
+                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Days Left</p>
+                                        <div class="xl:text-center">
                                             @if($rental->status === 'completed')
                                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,12 +278,14 @@
                                     </td>
 
                                     <!-- Total Price -->
-                                    <td class="px-6 py-4 text-right">
+                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4 xl:text-right">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Total Price</p>
                                         <p class="text-sm font-bold text-gray-900 dark:text-slate-100">₱{{ number_format($rental->total_price, 2) }}</p>
                                     </td>
 
-                                    <td class="px-6 py-4 text-center">
-                                        <div class="flex flex-col items-center gap-1">
+                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
+                                        <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Payment Status</p>
+                                        <div class="flex flex-col items-start gap-1 xl:items-center">
                                             <span class="{{ $paymentStatusClass }} inline-flex rounded-full px-3 py-1 text-xs font-semibold">
                                                 {{ $paymentStatusLabel }}
                                             </span>
@@ -293,7 +299,8 @@
                                     </td>
 
                                     <!-- Status -->
-                                    <td class="px-6 py-4 text-center">
+                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
+                                        <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Status</p>
                                         <span class="px-3 py-1 text-xs font-semibold rounded-full
                                             @if($isOnProcess)
                                                 bg-blue-100 text-blue-800
@@ -312,8 +319,8 @@
                                         </span>
                                     </td>
 
-                                    <td class="px-6 py-4 text-right">
-                                        <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">
+                                    <td class="block pt-3 xl:table-cell xl:px-6 xl:py-4 xl:text-right">
+                                        <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 xl:w-auto">
                                             View Details
                                         </a>
                                     </td>

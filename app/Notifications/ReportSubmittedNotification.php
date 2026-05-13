@@ -13,7 +13,6 @@ class ReportSubmittedNotification extends Notification
         public int $reportId,
         public string $reportType,
         public string $reason,
-        public string $reporterName,
         public ?string $itemName = null
     ) {}
 
@@ -40,7 +39,7 @@ class ReportSubmittedNotification extends Notification
 
         return [
             'title' => 'Report received',
-            'message' => "{$this->reporterName} submitted a report about {$subject}. Reason: {$this->reason}.",
+            'message' => "A user submitted a report about {$subject}. Reason: {$this->reason}.",
             'report_id' => $this->reportId,
             'report_type' => $this->reportType,
             'reason' => $this->reason,

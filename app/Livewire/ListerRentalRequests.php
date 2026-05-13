@@ -78,23 +78,28 @@ class ListerRentalRequests extends Component
         abort_unless(Auth::check(), 403);
         abort_if(Auth::user()?->isAdministrator(), 403);
 
-        $requestsQuery = Rental::query()
+        $baseQuery = Rental::query()
             ->whereHas('item', fn ($query) => $query->where('user_id', Auth::id()))
-            ->where('status', Rental::STATUS_PENDING)
-            ->with(['item.categoryRecord', 'renter'])
-            ->latest('created_at');
+            ->with(['item.categoryRecord', 'renter']);
 
         if ($this->search !== '') {
             $search = '%'.trim($this->search).'%';
-            $requestsQuery->where(function ($query) use ($search): void {
+            $baseQuery->where(function ($query) use ($search): void {
                 $query->whereHas('item', fn ($itemQuery) => $itemQuery->where('name', 'like', $search))
                     ->orWhereHas('renter', fn ($renterQuery) => $renterQuery->where('name', 'like', $search));
             });
         }
 
+        $requestsQuery = (clone $baseQuery)
+            ->where('status', Rental::STATUS_PENDING)
+            ->latest('created_at');
+
         return view('livewire.lister-rental-requests', [
             'requests' => $requestsQuery->paginate(10),
             'pendingCount' => (clone $requestsQuery)->count(),
+            'managedCount' => (clone $baseQuery)
+                ->whereIn('status', [Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE])
+                ->count(),
         ]);
     }
 }

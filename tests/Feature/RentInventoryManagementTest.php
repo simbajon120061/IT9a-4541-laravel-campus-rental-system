@@ -285,6 +285,69 @@ class RentInventoryManagementTest extends TestCase
             ->assertSee('Starts '.$rental->start_date->format('M d, Y'));
     }
 
+    public function test_inventory_can_open_directly_to_approved_filter(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $approvedItem = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $pendingItem = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Physics Reviewer',
+            'description' => 'Printed notes',
+            'price' => 40,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $approvedItem->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 100,
+            'paid_amount' => 0,
+            'payment_status' => 'outstanding',
+            'status' => 'approved',
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $pendingItem->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 80,
+            'paid_amount' => 0,
+            'payment_status' => 'outstanding',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::withQueryParams(['filter' => 'approved'])
+            ->test(RentInventoryManagement::class)
+            ->assertSet('filterStatus', 'approved')
+            ->assertSee('Linear Algebra Book')
+            ->assertDontSee('Physics Reviewer');
+    }
+
     public function test_owner_can_search_rentals_using_search_button(): void
     {
         $owner = User::factory()->create();

@@ -298,7 +298,6 @@ class ViewItem extends Component
             reportId: $report->id,
             reportType: $report->type,
             reason: $report->reason,
-            reporterName: Auth::user()->name,
             itemName: $report->reportedItem ? $this->item->name : null,
         ));
 

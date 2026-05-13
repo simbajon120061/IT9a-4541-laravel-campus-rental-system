@@ -285,7 +285,6 @@ class OwnerRentalRequestView extends Component
             reportId: $report->id,
             reportType: $report->type,
             reason: $report->reason,
-            reporterName: Auth::user()->name,
         ));
 
         $this->cancelReport();

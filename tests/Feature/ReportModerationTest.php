@@ -53,9 +53,10 @@ class ReportModerationTest extends TestCase
 
                 return $notification->reportType === Report::TYPE_ITEM
                     && $notification->reason === 'Misleading item details'
-                    && $notification->reporterName === $renter->name
                     && $notification->itemName === $item->name
                     && $payload['title'] === 'Report received'
+                    && str_contains($payload['message'], 'A user submitted a report')
+                    && ! str_contains($payload['message'], $renter->name)
                     && $payload['url'] === route('my-listings');
             }
         );
@@ -106,10 +107,38 @@ class ReportModerationTest extends TestCase
 
                 return $notification->reportType === Report::TYPE_MESSAGE
                     && $notification->reason === 'Threatening message'
-                    && $notification->reporterName === $renter->name
-                    && $payload['title'] === 'Report received';
+                    && $payload['title'] === 'Report received'
+                    && str_contains($payload['message'], 'A user submitted a report')
+                    && ! str_contains($payload['message'], $renter->name);
             }
         );
+    }
+
+    public function test_user_report_form_opens_from_rental_request_owner_card(): void
+    {
+        [$owner, $renter, , $rental] = $this->createRentalScenario();
+
+        Notification::fake();
+        $this->actingAs($renter);
+
+        Livewire::test(OwnerRentalRequestView::class, ['rental' => $rental])
+            ->call('openUserReportForm', $owner->id)
+            ->assertSet('showReportForm', true)
+            ->assertSet('reportType', Report::TYPE_USER)
+            ->assertSet('reportUserId', $owner->id)
+            ->assertSee('Report User')
+            ->assertSee('Share what admins should verify.')
+            ->set('reportReason', 'Unsafe meetup behavior')
+            ->call('submitReport')
+            ->assertSet('showReportForm', false)
+            ->assertSee('Report submitted. An admin will verify it.');
+
+        $this->assertDatabaseHas('reports', [
+            'reporter_id' => $renter->id,
+            'reported_user_id' => $owner->id,
+            'reported_message_id' => null,
+            'type' => Report::TYPE_USER,
+        ]);
     }
 
     public function test_admin_can_issue_warning_remove_item_and_remove_account_after_verification(): void

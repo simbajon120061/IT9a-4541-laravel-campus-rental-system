@@ -21,6 +21,10 @@ class NavigationLinkIconsTest extends TestCase
             ->assertOk()
             ->assertDontSee('Browse Categories')
             ->assertDontSee('Search Items')
+            ->assertSee('order-3 hidden w-full min-w-0 items-center overflow-x-auto border-t border-slate-100 pt-2 sm:order-none sm:flex', false)
+            ->assertSee('hidden whitespace-nowrap xl:inline', false)
+            ->assertSee('aria-label="Toggle navigation menu"', false)
+            ->assertSee(route('renter.messages'), false)
             ->assertSee('M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z', false)
             ->assertSee('M8 7V3m8 4V3m-9 8h10', false)
             ->assertDontSee('My Listings');
@@ -61,6 +65,10 @@ class NavigationLinkIconsTest extends TestCase
             ->assertSee('sidebarCollapsed', false)
             ->assertSee('Collapse sidebar')
             ->assertSee('Expand sidebar')
+            ->assertSee('xl:flex xl:flex-col', false)
+            ->assertSee('sm:block xl:hidden', false)
+            ->assertSee('sm:hidden', false)
+            ->assertSee(route('lister.messages'), false)
             ->assertSee('Toggle dark mode')
             ->assertSee('Profile Settings')
             ->assertSee('Juan Dela Cruz');

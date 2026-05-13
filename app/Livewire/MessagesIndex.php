@@ -62,6 +62,12 @@ class MessagesIndex extends Component
         $this->markConversationAsRead($rentalId);
     }
 
+    public function closeConversation(): void
+    {
+        $this->selectedRentalId = null;
+        $this->reset('messageText');
+    }
+
     public function sendMessage(): void
     {
         abort_unless(Auth::check(), 403);
@@ -127,11 +133,10 @@ class MessagesIndex extends Component
             default => $conversations->sortByDesc('messages_max_created_at'),
         })->values();
 
-        $selectedConversation = $conversations->firstWhere('id', $this->selectedRentalId) ?? $conversations->first();
+        $selectedConversation = $conversations->firstWhere('id', $this->selectedRentalId);
         $this->selectedRentalId = $selectedConversation?->id;
 
         if ($selectedConversation) {
-            $this->markConversationAsRead($selectedConversation->id);
             $selectedConversation->load(['item.user', 'renter', 'messages.sender']);
             $selectedConversation->setRelation('messages', $selectedConversation->messages->sortBy('created_at')->values());
         }

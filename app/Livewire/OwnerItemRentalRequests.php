@@ -36,6 +36,9 @@ class OwnerItemRentalRequests extends Component
         return view('livewire.owner-item-rental-requests', [
             'requests' => $requests,
             'pendingCount' => $pendingCount,
+            'managedCount' => $requests
+                ->whereIn('status', [Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE])
+                ->count(),
         ]);
     }
 }

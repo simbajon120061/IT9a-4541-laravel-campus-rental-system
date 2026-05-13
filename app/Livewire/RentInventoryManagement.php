@@ -22,6 +22,15 @@ class RentInventoryManagement extends Component
     /** @var array<int, mixed> */
     public array $paymentAmounts = [];
 
+    public function mount(): void
+    {
+        $filter = request('filter');
+
+        if (in_array($filter, ['all', 'due_soon', 'active', 'pending', 'approved'], true)) {
+            $this->filterStatus = $filter;
+        }
+    }
+
     public function applySearch(): void
     {
         $this->search = trim($this->search);

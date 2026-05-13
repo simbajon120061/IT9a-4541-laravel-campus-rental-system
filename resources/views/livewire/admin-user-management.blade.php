@@ -18,9 +18,9 @@
     </div>
 
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-                <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+        <div class="overflow-hidden">
+            <table class="block min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700 lg:table">
+                <thead class="hidden bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400 lg:table-header-group">
                     <tr>
                         <th class="px-5 py-3">User</th>
                         <th class="px-5 py-3">Role</th>
@@ -33,19 +33,25 @@
                         <th class="px-5 py-3 text-right">Action</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody class="block divide-y divide-slate-200 dark:divide-slate-700 lg:table-row-group">
                     @forelse ($users as $user)
-                        <tr wire:key="admin-user-{{ $user->id }}">
-                            <td class="px-5 py-4">
+                        <tr wire:key="admin-user-{{ $user->id }}" class="block p-4 lg:table-row lg:p-0">
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">User</p>
                                 <div class="font-semibold text-slate-900 dark:text-slate-100">{{ $user->name }}</div>
                                 <div class="text-xs text-slate-500 dark:text-slate-400">{{ $user->email }}</div>
                             </td>
-                            <td class="px-5 py-4">{{ $user->isAdministrator() ? 'Admin' : 'Student' }}</td>
-                            <td class="px-5 py-4">
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Role</p>
+                                {{ $user->isAdministrator() ? 'Admin' : 'Student' }}
+                            </td>
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Date Registered</p>
                                 <div class="font-medium text-slate-900 dark:text-slate-100">{{ $user->created_at->format('M d, Y') }}</div>
                                 <div class="text-xs text-slate-500 dark:text-slate-400">{{ $user->created_at->format('g:i A') }}</div>
                             </td>
-                            <td class="px-5 py-4">
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Status</p>
                                 <span class="rounded-lg px-3 py-1.5 text-xs font-semibold
                                     @if ($user->trashed()) bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300
                                     @elseif ($user->isRestricted()) bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200
@@ -53,10 +59,11 @@
                                     {{ $user->accountStatusLabel() }}
                                 </span>
                             </td>
-                            <td class="px-5 py-4">{{ $user->warning_count }}</td>
-                            <td class="px-5 py-4">{{ $user->items_count }}</td>
-                            <td class="px-5 py-4">{{ $user->rentals_count }}</td>
-                            <td class="px-5 py-4">
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4"><span class="font-semibold text-slate-400 lg:hidden">Warnings: </span>{{ $user->warning_count }}</td>
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4"><span class="font-semibold text-slate-400 lg:hidden">Items: </span>{{ $user->items_count }}</td>
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4"><span class="font-semibold text-slate-400 lg:hidden">Rentals: </span>{{ $user->rentals_count }}</td>
+                            <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
+                                <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 lg:hidden">Verified</p>
                                 @if ($user->isAdministrator())
                                     <span class="text-xs font-semibold text-slate-500">Admin</span>
                                 @else
@@ -65,8 +72,8 @@
                                     </button>
                                 @endif
                             </td>
-                            <td class="px-5 py-4 text-right">
-                                <div class="flex flex-wrap justify-end gap-2">
+                            <td class="block pt-3 lg:table-cell lg:px-5 lg:py-4 lg:text-right">
+                                <div class="flex flex-wrap gap-2 lg:justify-end">
                                     <button wire:click="viewUserDetails({{ $user->id }})" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:text-slate-200">
                                         View Details
                                     </button>

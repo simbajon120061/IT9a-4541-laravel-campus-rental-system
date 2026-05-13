@@ -52,9 +52,9 @@
             @livewire('navigation-menu')
 
             <div
-                class="{{ $usesListerSidebar ? 'lg:pt-20' : '' }}"
+                class="{{ $usesListerSidebar ? 'xl:pt-20' : '' }}"
                 @if ($usesListerSidebar)
-                    :class="sidebarCollapsed ? 'lg:pl-24' : 'lg:pl-72'"
+                    :class="sidebarCollapsed ? 'xl:pl-24' : 'xl:pl-72'"
                 @endif
             >
                 <!-- Page Heading -->
@@ -71,7 +71,9 @@
                     {{ $slot }}
                 </main>
 
-                <x-site-footer />
+                @unless (request()->routeIs('renter.messages', 'lister.messages'))
+                    <x-site-footer />
+                @endunless
             </div>
         </div>
 
