@@ -9,11 +9,7 @@
                 </div>
                 <div class="hidden items-center justify-between gap-3 sm:flex">
                 <div class="flex shrink-0 items-center gap-2">
-                    <button type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-900 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700" aria-label="New message" title="New message">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M16.9 4.8 19.2 7.1m-8.8 8.8 1.8-.2a2 2 0 0 0 1.2-.6l6.2-6.2a1.6 1.6 0 0 0 0-2.3l-2.2-2.2a1.6 1.6 0 0 0-2.3 0l-6.2 6.2a2 2 0 0 0-.6 1.2l-.2 1.8a1.2 1.2 0 0 0 1.3 1.3ZM7 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1" />
-                        </svg>
-                    </button>
+                    
                 </div>
             </div>
             </div>

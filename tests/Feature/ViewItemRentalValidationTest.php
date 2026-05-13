@@ -130,6 +130,22 @@ class ViewItemRentalValidationTest extends TestCase
             ->assertSee('Verified student');
     }
 
+    public function test_item_detail_page_includes_dark_mode_styles(): void
+    {
+        [, $renter, $item] = $this->createItemScenario();
+
+        $this->actingAs($renter);
+
+        Livewire::test(ViewItem::class, ['id' => $item->id])
+            ->assertSee('dark:from-slate-950 dark:to-slate-900', false)
+            ->assertSee('dark:border-slate-800 dark:bg-slate-900', false)
+            ->assertSee('dark:bg-slate-950/40', false)
+            ->assertSee('dark:border-blue-900/60 dark:bg-blue-950/30', false)
+            ->assertSee('dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100', false)
+            ->assertSee('dark:text-slate-300', false)
+            ->assertSee('dark:bg-rose-950/20', false);
+    }
+
     public function test_request_rental_message_is_saved_to_conversation(): void
     {
         [$owner, $renter, $item] = $this->createItemScenario();

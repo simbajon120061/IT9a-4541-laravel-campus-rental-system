@@ -300,7 +300,7 @@
         <div class="order-2 ml-auto flex items-center justify-end gap-2 sm:order-none sm:flex-1 sm:gap-3">
             @auth
                 @livewire('notifications-dropdown')
-                <a href="{{ route('renter.messages') }}" class="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 ring-1 ring-slate-200 transition hover:bg-white hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700 dark:hover:text-white" aria-label="Messages">
+                <a href="{{ route('renter.messages') }}" class="{{ request()->routeIs('renter.messages') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm shadow-blue-600/20 ring-transparent' : 'bg-slate-50 text-slate-600 ring-slate-200 hover:bg-white hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700 dark:hover:text-white' }} relative inline-flex h-10 w-10 items-center justify-center rounded-full ring-1 transition" aria-label="Messages">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10.5h8M8 14h5m-8 5 3.5-3.5H18a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v5.5a3 3 0 0 0 2 2.83V19Z" />
                     </svg>

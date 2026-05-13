@@ -30,6 +30,18 @@ class NavigationLinkIconsTest extends TestCase
             ->assertDontSee('My Listings');
     }
 
+    public function test_renter_messages_icon_has_active_indication(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('renter.messages'))
+            ->assertOk()
+            ->assertSee(route('renter.messages'), false)
+            ->assertSee('bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm shadow-blue-600/20 ring-transparent', false)
+            ->assertSee('aria-label="Messages"', false);
+    }
+
     public function test_homepage_shows_profile_dropdown_for_authenticated_user(): void
     {
         $user = User::factory()->create();

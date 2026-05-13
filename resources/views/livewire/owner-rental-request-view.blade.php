@@ -226,7 +226,7 @@
                         </div>
                     @else (! $isOwner)
                         <div class="mt-1 grid gap-3">
-                            <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-200 px-4 py-2 text-m font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
+                            <a href="{{ route('renter.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-200 px-4 py-2 text-m font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
                                 Open Chat
                             </a>
                         </div>
