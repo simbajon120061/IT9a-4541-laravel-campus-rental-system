@@ -18,8 +18,8 @@
     </div>
 
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <div class="overflow-hidden">
-            <table class="block min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700 lg:table">
+        <div class="overflow-x-auto">
+            <table class="block w-full min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700 lg:table lg:min-w-[72rem]">
                 <thead class="hidden bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400 lg:table-header-group">
                     <tr>
                         <th class="px-5 py-3">User</th>
@@ -93,7 +93,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="px-5 py-10 text-center text-slate-500">No users found.</td></tr>
+                        <tr class="block lg:table-row"><td colspan="9" class="block px-5 py-10 text-center text-slate-500 lg:table-cell">No users found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

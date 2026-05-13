@@ -1,9 +1,9 @@
-<div class="bg-gradient-to-b from-gray-50 to-white py-8 md:py-12 dark:from-slate-950 dark:to-slate-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="bg-gradient-to-b from-gray-50 to-white py-6 sm:py-8 md:py-12 dark:from-slate-950 dark:to-slate-900">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 dark:text-slate-100">My Rentals</h1>
-            <p class="text-gray-600 dark:text-slate-400">Track the items you've rented</p>
+        <div class="mb-6 sm:mb-8">
+            <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-slate-100 sm:text-4xl">My Rentals</h1>
+            <p class="text-sm text-gray-600 dark:text-slate-400 sm:text-base">Track the items you've rented</p>
         </div>
 
         @php
@@ -55,11 +55,11 @@
             </div>
         @endif
 
-        <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
-            <p class="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">Search Item or Owner</p>
+        <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 sm:rounded-2xl sm:p-5">
+            <p class="mb-3 text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">Search Item or Owner</p>
 
-            <div class="flex flex-col gap-3 xl:flex-row xl:items-center">
-                <div class="relative w-full xl:w-72 xl:shrink-0">
+            <div class="grid gap-3 lg:grid-cols-[minmax(16rem,24rem)_minmax(0,1fr)] lg:items-center">
+                <div class="relative w-full">
                     <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -67,14 +67,14 @@
                         type="text"
                         wire:model.live.debounce.300ms="search"
                         placeholder="Search by item name or owner name..."
-                        class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/30"
+                        class="h-12 w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/30"
                     >
                 </div>
 
-                <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:flex xl:min-w-0 xl:flex-1 xl:flex-nowrap">
+                <div class="grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
                     <button
                         wire:click="setFilter('all')"
-                        class="{{ $filterStatus === 'all' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex min-w-0 items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition xl:flex-1"
+                        class="{{ $filterStatus === 'all' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex h-12 min-w-0 items-center justify-between rounded-xl px-3 text-xs font-semibold transition sm:text-sm"
                     >
                         <span class="truncate">All Rentals</span>
                         <span class="{{ $filterStatus === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }} ms-2 inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold">{{ $allCount }}</span>
@@ -82,7 +82,7 @@
 
                     <button
                         wire:click="setFilter('due_soon')"
-                        class="{{ $filterStatus === 'due_soon' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex min-w-0 items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition xl:flex-1"
+                        class="{{ $filterStatus === 'due_soon' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex h-12 min-w-0 items-center justify-between rounded-xl px-3 text-xs font-semibold transition sm:text-sm"
                     >
                         <span class="truncate">Due Soon</span>
                         <span class="{{ $filterStatus === 'due_soon' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }} ms-2 inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold">{{ $dueSoonCount }}</span>
@@ -90,7 +90,7 @@
 
                     <button
                         wire:click="setFilter('active')"
-                        class="{{ $filterStatus === 'active' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex min-w-0 items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition xl:flex-1"
+                        class="{{ $filterStatus === 'active' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex h-12 min-w-0 items-center justify-between rounded-xl px-3 text-xs font-semibold transition sm:text-sm"
                     >
                         <span class="truncate">Active Loan</span>
                         <span class="{{ $filterStatus === 'active' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }} ms-2 inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold">{{ $activeCount }}</span>
@@ -98,7 +98,7 @@
 
                     <button
                         wire:click="setFilter('pending')"
-                        class="{{ $filterStatus === 'pending' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex min-w-0 items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition xl:flex-1"
+                        class="{{ $filterStatus === 'pending' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex h-12 min-w-0 items-center justify-between rounded-xl px-3 text-xs font-semibold transition sm:text-sm"
                     >
                         <span class="truncate">Pending Request</span>
                         <span class="{{ $filterStatus === 'pending' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }} ms-2 inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold">{{ $pendingCount }}</span>
@@ -106,7 +106,7 @@
 
                     <button
                         wire:click="setFilter('approved')"
-                        class="{{ $filterStatus === 'approved' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex min-w-0 items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition xl:flex-1"
+                        class="{{ $filterStatus === 'approved' ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500' }} inline-flex h-12 min-w-0 items-center justify-between rounded-xl px-3 text-xs font-semibold transition sm:text-sm"
                     >
                         <span class="truncate">Approved Request</span>
                         <span class="{{ $filterStatus === 'approved' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }} ms-2 inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold">{{ $approvedCount }}</span>
@@ -145,9 +145,9 @@
             </div>
         @else
             <!-- Table Container -->
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:bg-slate-900 dark:border-slate-700 dark:shadow-slate-900/40">
-                <div class="overflow-hidden">
-                    <table class="block w-full xl:table">
+            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-900/40">
+                <div>
+                    <table class="w-full xl:table">
                         <thead class="hidden xl:table-header-group">
                             <tr class="bg-gray-100 border-b border-gray-200 dark:bg-slate-800 dark:border-slate-700">
                                 <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-slate-300">Item</th>
@@ -185,9 +185,9 @@
                                         default => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
                                     };
                                 @endphp
-                                <tr class="{{ $rowClass }} block p-4 transition-colors duration-200 xl:table-row xl:p-0">
+                                <tr class="{{ $rowClass }} block p-4 transition-colors duration-200 sm:p-5 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-x-6 md:gap-y-3 xl:table-row xl:p-0">
                                     <!-- Item Name -->
-                                    <td class="block py-2 xl:table-cell xl:px-6 xl:py-4">
+                                    <td class="block py-2 md:col-span-2 xl:table-cell xl:px-6 xl:py-4">
                                         <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Item</p>
                                         <div class="flex items-center gap-3">
                                             @if($rental->item->imageUrl())
@@ -199,7 +199,7 @@
                                                     </svg>
                                                 </div>
                                             @endif
-                                            <div>
+                                            <div class="min-w-0">
                                                 <p class="text-sm font-semibold text-gray-900 dark:text-slate-100">{{ $rental->item->name }}</p>
                                                 <p class="text-xs text-gray-500 dark:text-slate-400">{{ $rental->item->categoryRecord?->name ?? 'No category' }}</p>
                                             </div>
@@ -218,7 +218,7 @@
                                                     {{ $initials }}
                                                 </span>
                                             </div>
-                                            <p class="text-sm font-medium text-gray-900 dark:text-slate-100">{{ $rental->item->user->name }}</p>
+                                            <p class="min-w-0 text-sm font-medium text-gray-900 dark:text-slate-100">{{ $rental->item->user->name }}</p>
                                         </div>
                                     </td>
 
@@ -226,7 +226,7 @@
                                     <td class="block py-2 xl:table-cell xl:px-6 xl:py-4">
                                         <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Rental Period</p>
                                         <div class="text-sm">
-                                            <p class="text-gray-900">{{ $rental->start_date->format('M d') }} → {{ $rental->end_date->format('M d, Y') }}</p>
+                                            <p class="text-gray-900 dark:text-slate-100">{{ $rental->start_date->format('M d') }} &rarr; {{ $rental->end_date->format('M d, Y') }}</p>
                                             <p class="text-xs text-gray-500 dark:text-slate-400">{{ $rental->start_date->format('Y') }}</p>
                                         </div>
                                     </td>
@@ -280,7 +280,7 @@
                                     <!-- Total Price -->
                                     <td class="block py-2 xl:table-cell xl:px-6 xl:py-4 xl:text-right">
                                         <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Total Price</p>
-                                        <p class="text-sm font-bold text-gray-900 dark:text-slate-100">₱{{ number_format($rental->total_price, 2) }}</p>
+                                        <p class="text-sm font-bold text-gray-900 dark:text-slate-100">&#8369;{{ number_format($rental->total_price, 2) }}</p>
                                     </td>
 
                                     <td class="block py-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
@@ -301,7 +301,7 @@
                                     <!-- Status -->
                                     <td class="block py-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
                                         <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Status</p>
-                                        <span class="px-3 py-1 text-xs font-semibold rounded-full
+                                        <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full
                                             @if($isOnProcess)
                                                 bg-blue-100 text-blue-800
                                             @elseif($rental->status === 'active')
@@ -319,8 +319,8 @@
                                         </span>
                                     </td>
 
-                                    <td class="block pt-3 xl:table-cell xl:px-6 xl:py-4 xl:text-right">
-                                        <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 xl:w-auto">
+                                    <td class="block pt-3 md:col-span-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
+                                        <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto sm:px-4 xl:w-auto xl:py-2">
                                             View Details
                                         </a>
                                     </td>

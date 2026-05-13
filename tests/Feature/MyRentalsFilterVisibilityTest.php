@@ -292,4 +292,45 @@ class MyRentalsFilterVisibilityTest extends TestCase
             ->assertSee('200.00')
             ->assertSee('600.00');
     }
+
+    public function test_my_rentals_page_uses_responsive_filter_and_card_layout(): void
+    {
+        $renter = User::factory()->create();
+        $owner = User::factory()->create();
+
+        $category = Category::query()->firstOrCreate(
+            ['slug' => 'responsive-rentals'],
+            ['name' => 'Responsive Rentals', 'icon' => 'box', 'is_active' => true]
+        );
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Light Gray Suit',
+            'description' => 'Formal wear',
+            'price' => 200,
+            'status' => 'rented',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(2),
+            'total_price' => 200,
+            'paid_amount' => 100,
+            'payment_status' => Rental::PAYMENT_STATUS_PARTIAL,
+            'status' => Rental::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($renter);
+
+        Livewire::test(MyRentals::class)
+            ->assertSee('grid gap-3 lg:grid-cols-[minmax(16rem,24rem)_minmax(0,1fr)] lg:items-center', false)
+            ->assertSee('grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5', false)
+            ->assertSee('md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-x-6 md:gap-y-3 xl:table-row', false)
+            ->assertSee('md:col-span-2 xl:table-cell', false)
+            ->assertDontSee('overflow-x-auto', false)
+            ->assertDontSee('xl:min-w-[72rem]', false);
+    }
 }

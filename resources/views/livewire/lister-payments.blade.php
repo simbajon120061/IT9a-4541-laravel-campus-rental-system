@@ -41,8 +41,8 @@
             @if ($payments->isEmpty())
                 <div class="p-10 text-center text-slate-600 dark:text-slate-300">No payment records found.</div>
             @else
-                <div class="overflow-hidden">
-                    <table class="block w-full md:table">
+                <div class="overflow-x-auto">
+                    <table class="block w-full md:table md:min-w-[54rem]">
                         <thead class="hidden bg-slate-100 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300 md:table-header-group">
                             <tr>
                                 <th class="px-5 py-4 text-left font-semibold">Item</th>
@@ -55,7 +55,7 @@
                         </thead>
                         <tbody class="block divide-y divide-slate-200 dark:divide-slate-800 md:table-row-group">
                             @foreach ($payments as $payment)
-                                <tr class="block p-4 text-sm text-slate-700 dark:text-slate-300 md:table-row md:p-0">
+                                <tr id="payment-{{ $payment->id }}" class="block scroll-mt-28 p-4 text-sm text-slate-700 dark:text-slate-300 md:table-row md:p-0">
                                     <td class="block py-2 md:table-cell md:px-5 md:py-4">
                                         <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 md:hidden">Item</p>
                                         <p class="font-bold text-slate-950 dark:text-white">{{ $payment->item->name }}</p>
@@ -85,13 +85,14 @@
                                     </td>
                                     <td class="block pt-3 md:table-cell md:px-5 md:py-4">
                                         @if ($payment->payment_status !== 'fully_paid')
-                                            <div class="flex flex-col gap-2 sm:flex-row md:justify-end">
-                                                <input type="number" step="0.01" min="0.01" wire:model.defer="paymentAmounts.{{ $payment->id }}" class="w-full rounded-md border-slate-300 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white sm:w-28" placeholder="Amount">
-                                                <button wire:click="recordPayment({{ $payment->id }})" class="rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">Save</button>
+                                            <div class="grid grid-cols-2 gap-2 md:flex md:justify-end">
+                                                <button type="button" wire:click="openAddPaymentModal({{ $payment->id }})" class="inline-flex items-center justify-center rounded-md border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
+                                                    Add Payment
+                                                </button>
+                                                <button type="button" wire:click="openFullPaymentModal({{ $payment->id }})" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">
+                                                    Pay in Full
+                                                </button>
                                             </div>
-                                            @error('paymentAmounts.' . $payment->id)
-                                                <p class="mt-1 text-xs text-rose-600 dark:text-rose-400 md:text-right">{{ $message }}</p>
-                                            @enderror
                                         @else
                                             <p class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 md:text-right">Complete</p>
                                         @endif
@@ -108,4 +109,72 @@
             <div class="mt-6">{{ $payments->links() }}</div>
         @endif
     </div>
+
+    @if ($selectedPayment)
+        @php
+            $remainingBalance = max(0, round((float) $selectedPayment->total_price - (float) ($selectedPayment->paid_amount ?? 0), 2));
+        @endphp
+
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+            <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300">Record Payment</p>
+                        <h2 id="payment-modal-title" class="mt-1 text-xl font-extrabold text-slate-950 dark:text-white">
+                            {{ $paymentMode === 'full' ? 'Pay in Full' : 'Add Payment' }}
+                        </h2>
+                    </div>
+                    <button type="button" wire:click="closePaymentModal" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Cancel payment entry">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="mt-5 rounded-lg bg-slate-50 p-4 text-sm text-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                    <p class="font-bold text-slate-950 dark:text-white">{{ $selectedPayment->item->name }}</p>
+                    <p class="mt-1">{{ $selectedPayment->renter->name }}</p>
+                    <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <span class="block font-semibold uppercase text-slate-400">Paid</span>
+                            <span class="mt-1 block font-bold text-slate-900 dark:text-slate-100">&#8369;{{ number_format((float) $selectedPayment->paid_amount, 2) }}</span>
+                        </div>
+                        <div>
+                            <span class="block font-semibold uppercase text-slate-400">Remaining</span>
+                            <span class="mt-1 block font-bold text-slate-900 dark:text-slate-100">&#8369;{{ number_format($remainingBalance, 2) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form wire:submit.prevent="savePayment" class="mt-5 space-y-4">
+                    <div>
+                        <label for="paymentAmount" class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Payment amount</label>
+                        <input
+                            id="paymentAmount"
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            max="{{ $remainingBalance }}"
+                            wire:model.defer="paymentAmount"
+                            @if ($paymentMode === 'full') readonly @endif
+                            class="h-12 w-full rounded-lg border-slate-300 bg-white px-4 text-sm text-slate-950 focus:border-violet-500 focus:ring-violet-500 read-only:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:read-only:bg-slate-800"
+                            placeholder="Enter amount"
+                        >
+                        @error('paymentAmount')
+                            <p class="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" wire:click="closePaymentModal" class="inline-flex h-11 items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                            Cancel
+                        </button>
+                        <button type="submit" class="inline-flex h-11 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700">
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>

@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Rental;
 use App\Notifications\RentalRequestDecisionNotification;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -21,6 +22,14 @@ class RentInventoryManagement extends Component
 
     /** @var array<int, mixed> */
     public array $paymentAmounts = [];
+
+    public bool $showDeleteModal = false;
+
+    public ?int $pendingDeleteRentalId = null;
+
+    public string $pendingDeleteRentalItemName = '';
+
+    public string $pendingDeleteRentalBorrowerName = '';
 
     public function mount(): void
     {
@@ -157,6 +166,42 @@ class RentInventoryManagement extends Component
         session()->flash('message', 'Rental status updated to Rented.');
     }
 
+    public function confirmDeleteRental(int $rentalId): void
+    {
+        abort_unless(Auth::check(), 403);
+
+        $rental = $this->ownedRentalQuery()
+            ->with(['item', 'renter'])
+            ->findOrFail($rentalId);
+
+        $this->pendingDeleteRentalId = $rental->id;
+        $this->pendingDeleteRentalItemName = $rental->item->name;
+        $this->pendingDeleteRentalBorrowerName = $rental->renter->name;
+        $this->showDeleteModal = true;
+    }
+
+    public function cancelDeleteRental(): void
+    {
+        $this->resetDeleteModalState();
+    }
+
+    public function deleteRental(?int $rentalId = null): void
+    {
+        abort_unless(Auth::check(), 403);
+
+        $targetRentalId = $rentalId ?? $this->pendingDeleteRentalId;
+        abort_if($targetRentalId === null, 404);
+
+        $rental = $this->ownedRentalQuery()->findOrFail($targetRentalId);
+
+        $rental->delete();
+
+        $this->resetDeleteModalState();
+        $this->resetPage();
+
+        session()->flash('message', 'Rental record deleted successfully.');
+    }
+
     public function render(): View
     {
         abort_unless(Auth::check(), 403);
@@ -180,12 +225,45 @@ class RentInventoryManagement extends Component
             ->where('start_date', '<=', now())
             ->whereBetween('end_date', [now(), now()->addDays(7)])
             ->count();
+        $paidDueSoonCount = (clone $baseQuery)
+            ->where('status', Rental::STATUS_ACTIVE)
+            ->where('payment_status', Rental::PAYMENT_STATUS_FULLY_PAID)
+            ->where('start_date', '<=', now())
+            ->whereBetween('end_date', [now(), now()->addDays(7)])
+            ->count();
+        $paidDueSoonRental = (clone $baseQuery)
+            ->where('status', Rental::STATUS_ACTIVE)
+            ->where('payment_status', Rental::PAYMENT_STATUS_FULLY_PAID)
+            ->where('start_date', '<=', now())
+            ->whereBetween('end_date', [now(), now()->addDays(7)])
+            ->orderBy('end_date')
+            ->first();
         $activeCount = (clone $baseQuery)
             ->where('status', Rental::STATUS_ACTIVE)
             ->where('start_date', '<=', now())
             ->count();
         $pendingCount = (clone $baseQuery)->where('status', Rental::STATUS_PENDING)->count();
         $approvedCount = (clone $baseQuery)
+            ->where(function ($query): void {
+                $query->where('status', Rental::STATUS_APPROVED)
+                    ->orWhere(function ($subQuery): void {
+                        $subQuery->where('status', Rental::STATUS_ACTIVE)
+                            ->where('start_date', '>', now());
+                    });
+            })
+            ->count();
+        $unpaidNotRentedCount = (clone $baseQuery)
+            ->where('payment_status', Rental::PAYMENT_STATUS_OUTSTANDING)
+            ->where(function ($query): void {
+                $query->where('status', Rental::STATUS_APPROVED)
+                    ->orWhere(function ($subQuery): void {
+                        $subQuery->where('status', Rental::STATUS_ACTIVE)
+                            ->where('start_date', '>', now());
+                    });
+            })
+            ->count();
+        $partialNotRentedCount = (clone $baseQuery)
+            ->where('payment_status', Rental::PAYMENT_STATUS_PARTIAL)
             ->where(function ($query): void {
                 $query->where('status', Rental::STATUS_APPROVED)
                     ->orWhere(function ($subQuery): void {
@@ -225,14 +303,32 @@ class RentInventoryManagement extends Component
             'rentals' => $rentals,
             'allCount' => $allCount,
             'dueSoonCount' => $dueSoonCount,
+            'paidDueSoonCount' => $paidDueSoonCount,
+            'paidDueSoonRental' => $paidDueSoonRental,
             'activeCount' => $activeCount,
             'pendingCount' => $pendingCount,
             'approvedCount' => $approvedCount,
+            'unpaidNotRentedCount' => $unpaidNotRentedCount,
+            'partialNotRentedCount' => $partialNotRentedCount,
         ]);
     }
 
     private function remainingBalance(Rental $rental): float
     {
         return max(0, round((float) $rental->total_price - (float) ($rental->paid_amount ?? 0), 2));
+    }
+
+    private function resetDeleteModalState(): void
+    {
+        $this->showDeleteModal = false;
+        $this->pendingDeleteRentalId = null;
+        $this->pendingDeleteRentalItemName = '';
+        $this->pendingDeleteRentalBorrowerName = '';
+    }
+
+    private function ownedRentalQuery(): Builder
+    {
+        return Rental::query()
+            ->whereHas('item', fn ($query) => $query->where('user_id', Auth::id()));
     }
 }

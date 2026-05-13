@@ -31,11 +31,20 @@ class RenterDashboard extends Component
             ->where('status', Rental::STATUS_PENDING)
             ->count();
 
-        $dueSoonRentals = (clone $rentalsQuery)
+        $dueSoonRentalsQuery = (clone $rentalsQuery)
             ->where('status', Rental::STATUS_ACTIVE)
             ->where('start_date', '<=', $now)
-            ->whereBetween('end_date', [$now, $now->copy()->addDays(7)])
-            ->count();
+            ->whereBetween('end_date', [$now, $now->copy()->addDays(7)]);
+
+        $dueSoonRentals = (clone $dueSoonRentalsQuery)->count();
+
+        $nextDueRental = (clone $dueSoonRentalsQuery)
+            ->orderBy('end_date')
+            ->first(['id', 'end_date']);
+
+        $daysUntilNextDue = $nextDueRental?->end_date
+            ? max(0, (int) $now->copy()->startOfDay()->diffInDays($nextDueRental->end_date->copy()->startOfDay(), false))
+            : null;
 
         $approvedRentals = (clone $rentalsQuery)
             ->where(function ($query): void {
@@ -56,6 +65,7 @@ class RenterDashboard extends Component
             'activeRentals' => $activeRentals,
             'pendingRequests' => $pendingRequests,
             'dueSoonRentals' => $dueSoonRentals,
+            'daysUntilNextDue' => $daysUntilNextDue,
             'approvedRentals' => $approvedRentals,
             'recentRentals' => $recentRentals,
         ]);

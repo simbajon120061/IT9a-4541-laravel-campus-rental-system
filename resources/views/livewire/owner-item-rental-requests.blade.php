@@ -32,8 +32,8 @@
             </div>
         @else
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                <div class="overflow-hidden">
-                    <table class="block w-full md:table">
+                <div class="overflow-x-auto">
+                    <table class="block w-full md:table md:min-w-[52rem]">
                         <thead class="hidden bg-slate-100 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300 md:table-header-group">
                             <tr>
                                 <th class="px-5 py-4 text-left font-semibold">Requester</th>

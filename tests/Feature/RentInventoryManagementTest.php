@@ -198,6 +198,55 @@ class RentInventoryManagementTest extends TestCase
             ->assertSee('Linear Algebra Book');
     }
 
+    public function test_owner_can_view_payment_link_and_delete_rental_from_inventory(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 100,
+            'paid_amount' => 40,
+            'payment_status' => Rental::PAYMENT_STATUS_PARTIAL,
+            'status' => Rental::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('View Payment')
+            ->assertSee(route('lister.payments', ['filter' => Rental::PAYMENT_STATUS_PARTIAL]).'#payment-'.$rental->id, false)
+            ->call('confirmDeleteRental', $rental->id)
+            ->assertSet('showDeleteModal', true)
+            ->assertSee('Confirm Delete')
+            ->assertSee('Linear Algebra Book')
+            ->call('deleteRental')
+            ->assertSet('showDeleteModal', false)
+            ->assertSee('Rental record deleted successfully.');
+
+        $this->assertSoftDeleted('rentals', ['id' => $rental->id]);
+    }
+
     public function test_owner_can_mark_approved_rental_as_rented(): void
     {
         $owner = User::factory()->create();
@@ -282,7 +331,53 @@ class RentInventoryManagementTest extends TestCase
         Livewire::test(RentInventoryManagement::class)
             ->assertSee('Approved Request')
             ->assertSee('On Process')
-            ->assertSee('Starts '.$rental->start_date->format('M d, Y'));
+            ->assertSee('Starts '.$rental->start_date->format('M d, Y'))
+            ->assertSee(route('rental-requests.show', $rental), false)
+            ->assertSee(route('lister.messages', ['rental' => $rental->id]), false)
+            ->assertSee(route('lister.payments', ['filter' => $rental->payment_status]).'#payment-'.$rental->id, false);
+    }
+
+    public function test_active_rental_days_left_is_shown_with_rental_status_not_actions(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'rented',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'total_price' => 100,
+            'paid_amount' => 100,
+            'payment_status' => Rental::PAYMENT_STATUS_FULLY_PAID,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('Due Soon')
+            ->assertSee('1 day(s) left')
+            ->assertSee(route('rental-requests.show', $rental), false)
+            ->assertSee(route('lister.messages', ['rental' => $rental->id]), false)
+            ->assertSee(route('lister.payments', ['filter' => Rental::PAYMENT_STATUS_FULLY_PAID]).'#payment-'.$rental->id, false);
     }
 
     public function test_inventory_can_open_directly_to_approved_filter(): void
@@ -346,6 +441,131 @@ class RentInventoryManagementTest extends TestCase
             ->assertSet('filterStatus', 'approved')
             ->assertSee('Linear Algebra Book')
             ->assertDontSee('Physics Reviewer');
+    }
+
+    public function test_on_process_notice_links_to_payments_without_inline_payment_controls(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 100,
+            'paid_amount' => 0,
+            'payment_status' => Rental::PAYMENT_STATUS_OUTSTANDING,
+            'status' => Rental::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee(route('lister.payments', ['filter' => 'outstanding']), false)
+            ->assertDontSee('Pay in Full')
+            ->assertDontSee('wire:click="recordPayment', false)
+            ->assertDontSee('placeholder="Amount"', false);
+    }
+
+    public function test_fully_paid_active_due_soon_rental_replaces_on_process_card_with_record_link(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'rented',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDays(2),
+            'total_price' => 100,
+            'paid_amount' => 100,
+            'payment_status' => Rental::PAYMENT_STATUS_FULLY_PAID,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('Due Soon Alert')
+            ->assertSee(route('lister.inventory', ['filter' => 'due_soon']).'#rental-'.$rental->id, false)
+            ->assertSee('id="rental-'.$rental->id.'"', false)
+            ->assertDontSee('approved request(s) are waiting for payment confirmation.');
+    }
+
+    public function test_on_process_card_mentions_partial_payments_before_rental_handoff(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(3),
+            'total_price' => 100,
+            'paid_amount' => 40,
+            'payment_status' => Rental::PAYMENT_STATUS_PARTIAL,
+            'status' => Rental::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('On Process')
+            ->assertSee('request(s) are approved but not rented yet.')
+            ->assertSee('have partial payment recorded.');
     }
 
     public function test_owner_can_search_rentals_using_search_button(): void

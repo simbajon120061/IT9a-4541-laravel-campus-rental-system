@@ -28,11 +28,32 @@ class ListerDashboard extends Component
         $availableListings = (clone $itemsQuery)->where('status', 'available')->count();
         $rentedListings = (clone $itemsQuery)->where('status', 'rented')->count();
         $pendingRequests = (clone $ownedRentalsQuery)->where('status', Rental::STATUS_PENDING)->count();
-        $dueSoonRentals = (clone $ownedRentalsQuery)
+        $onProcessRentalsQuery = (clone $ownedRentalsQuery)
+            ->where(function ($query) use ($now): void {
+                $query->where('status', Rental::STATUS_APPROVED)
+                    ->orWhere(function ($subQuery) use ($now): void {
+                        $subQuery->where('status', Rental::STATUS_ACTIVE)
+                            ->where('start_date', '>', $now);
+                    });
+            });
+        $onProcessRentals = (clone $onProcessRentalsQuery)->count();
+        $nextOnProcessRental = (clone $onProcessRentalsQuery)
+            ->orderBy('start_date')
+            ->first(['id', 'start_date']);
+        $dueSoonRentalsQuery = (clone $ownedRentalsQuery)
             ->where('status', Rental::STATUS_ACTIVE)
             ->where('start_date', '<=', $now)
-            ->whereBetween('end_date', [$now, $now->copy()->addDays(7)])
-            ->count();
+            ->whereBetween('end_date', [$now, $now->copy()->addDays(7)]);
+
+        $dueSoonRentals = (clone $dueSoonRentalsQuery)->count();
+
+        $nextDueRental = (clone $dueSoonRentalsQuery)
+            ->orderBy('end_date')
+            ->first(['id', 'end_date']);
+
+        $daysUntilNextDue = $nextDueRental?->end_date
+            ? max(0, (int) $now->copy()->startOfDay()->diffInDays($nextDueRental->end_date->copy()->startOfDay(), false))
+            : null;
 
         $totalEarnings = (float) (clone $ownedRentalsQuery)
             ->where('status', '!=', Rental::STATUS_CANCELLED)
@@ -49,7 +70,10 @@ class ListerDashboard extends Component
             'availableListings' => $availableListings,
             'rentedListings' => $rentedListings,
             'pendingRequests' => $pendingRequests,
+            'onProcessRentals' => $onProcessRentals,
+            'nextOnProcessRental' => $nextOnProcessRental,
             'dueSoonRentals' => $dueSoonRentals,
+            'daysUntilNextDue' => $daysUntilNextDue,
             'totalEarnings' => $totalEarnings,
             'recentRequests' => $recentRequests,
         ]);

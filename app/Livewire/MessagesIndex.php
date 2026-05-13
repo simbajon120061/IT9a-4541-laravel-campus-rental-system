@@ -35,6 +35,13 @@ class MessagesIndex extends Component
             session('active_portal') === 'lister' => 'lister',
             default => 'all',
         };
+
+        $rentalId = request('rental');
+
+        if (is_numeric($rentalId) && $this->accessibleRentalsQuery()->whereKey((int) $rentalId)->exists()) {
+            $this->selectedRentalId = (int) $rentalId;
+            $this->markConversationAsRead((int) $rentalId);
+        }
     }
 
     public function updatedSearch(): void
@@ -107,11 +114,19 @@ class MessagesIndex extends Component
         abort_unless(Auth::check(), 403);
         abort_if(Auth::user()?->isAdministrator(), 403);
 
-        $conversations = $this->accessibleRentalsQuery()
+        $conversationsQuery = $this->accessibleRentalsQuery()
             ->whereHas('messages')
             ->with(['item.user', 'renter', 'messages.sender'])
-            ->withMax('messages', 'created_at')
-            ->get()
+            ->withMax('messages', 'created_at');
+
+        if ($this->selectedRentalId !== null) {
+            $conversationsQuery->orWhere(function (Builder $query): void {
+                $query->whereKey($this->selectedRentalId)
+                    ->whereIn('id', $this->accessibleRentalsQuery()->select('id'));
+            });
+        }
+
+        $conversations = $conversationsQuery->get()
             ->map(function (Rental $rental): Rental {
                 $rental->setRelation('messages', $rental->messages->sortBy('created_at')->values());
 

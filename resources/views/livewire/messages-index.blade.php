@@ -1,6 +1,6 @@
 <div class="h-[calc(100vh-4rem)] bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100">
     <div class="flex h-full w-full flex-col md:px-4 md:py-4 xl:px-6 xl:py-6">
-        <div class="hidden shrink-0 lg:block">
+        <div class="hidden shrink-0 xl:block">
             <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
                     <p class="text-sm font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300">Messages</p>
@@ -20,11 +20,11 @@
             
         </div>
 
-        <section class="flex min-h-0 flex-1 overflow-hidden bg-white shadow-sm dark:bg-slate-900 sm:rounded-2xl sm:border sm:border-slate-200 dark:sm:border-slate-800 lg:mt-6">
-            <div class="grid min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[minmax(18rem,34vw)_minmax(0,1fr)] md:grid-rows-none xl:grid-cols-[22rem_minmax(0,1fr)]">
-                <aside class="{{ $selectedConversation ? 'hidden md:flex' : 'flex' }} min-h-0 flex-col border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 md:border-b-0 md:border-r">
+        <section class="flex min-h-0 flex-1 overflow-hidden bg-white shadow-sm dark:bg-slate-900 sm:rounded-2xl sm:border sm:border-slate-200 dark:sm:border-slate-800 xl:mt-6">
+            <div class="grid min-h-0 w-full grid-rows-[auto_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)] xl:grid-rows-none">
+                <aside class="{{ $selectedConversation ? 'hidden xl:flex' : 'flex' }} min-h-0 flex-col border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 xl:border-b-0 xl:border-r">
                     <div class="shrink-0 space-y-3 border-b border-slate-100 p-3 dark:border-slate-800 sm:space-y-4 sm:p-4">
-                        
+                        <p class="text-sm font-extrabold text-slate-950 dark:text-white lg:hidden">Chats</p>
 
                         <label for="message-search" class="relative block">
                             <span class="sr-only">Search messages</span>
@@ -54,7 +54,7 @@
                         </div>
                     </div>
 
-                    <div class="max-h-24 space-y-1 overflow-y-auto p-2 sm:max-h-48 md:max-h-none md:flex-1">
+                    <div class="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
                         @forelse ($conversations as $conversation)
                             @php
                                 $isOwner = (int) $conversation->item?->user_id === (int) auth()->id();
@@ -99,7 +99,7 @@
                     </div>
                 </aside>
 
-                <main class="{{ $selectedConversation ? 'flex' : 'hidden md:flex' }} min-h-0 min-w-0 flex-col">
+                <main class="{{ $selectedConversation ? 'flex' : 'hidden xl:flex' }} min-h-0 min-w-0 flex-col">
                     @if ($selectedConversation)
                         @php
                             $isOwner = (int) $selectedConversation->item?->user_id === (int) auth()->id();
@@ -111,7 +111,7 @@
                                 <button
                                     type="button"
                                     wire:click="closeConversation"
-                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white md:hidden"
+                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white xl:hidden"
                                     aria-label="Back to conversations"
                                     title="Back to conversations"
                                 >

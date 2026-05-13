@@ -24,8 +24,38 @@
         @endif
 
         <div class="mt-8 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <label for="request-search" class="sr-only">Search rental requests</label>
-            <input id="request-search" type="text" wire:model.live.debounce.300ms="search" class="w-full rounded-lg border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-950 focus:border-violet-500 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Search by item or renter name">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(18rem,1fr)_minmax(11rem,14rem)_minmax(11rem,14rem)_minmax(10rem,13rem)]">
+                <div class="min-w-0 sm:col-span-2 xl:col-span-1">
+                    <label for="request-search" class="sr-only">Search rental requests</label>
+                    <input id="request-search" type="text" wire:model.live.debounce.300ms="search" class="h-12 w-full rounded-lg border-slate-300 bg-slate-50 px-4 text-sm text-slate-950 focus:border-violet-500 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Search by item or renter name">
+                </div>
+
+                <div>
+                    <label for="request-category" class="sr-only">Filter by item category</label>
+                    <select id="request-category" wire:model.live="categoryFilter" class="h-12 w-full rounded-lg border-slate-300 bg-slate-50 px-4 text-sm font-semibold text-slate-700 focus:border-violet-500 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                        <option value="all">All categories</option>
+                        @foreach ($categoryOptions as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="request-grouping" class="sr-only">Group by item</label>
+                    <select id="request-grouping" wire:model.live="itemGrouping" class="h-12 w-full rounded-lg border-slate-300 bg-slate-50 px-4 text-sm font-semibold text-slate-700 focus:border-violet-500 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                        <option value="table">Standard table</option>
+                        <option value="grouped">Grouped by item</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="request-date-sort" class="sr-only">Sort by date</label>
+                    <select id="request-date-sort" wire:model.live="dateSort" class="h-12 w-full rounded-lg border-slate-300 bg-slate-50 px-4 text-sm font-semibold text-slate-700 focus:border-violet-500 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -37,8 +67,8 @@
                     </a>
                 </div>
             @else
-                <div class="overflow-hidden">
-                    <table class="block w-full md:table">
+                <div class="overflow-x-auto">
+                    <table class="block w-full md:table md:min-w-[58rem]">
                         <thead class="hidden bg-slate-100 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300 md:table-header-group">
                             <tr>
                                 <th class="px-5 py-4 text-left font-semibold">Item</th>
@@ -49,7 +79,24 @@
                             </tr>
                         </thead>
                         <tbody class="block divide-y divide-slate-200 dark:divide-slate-800 md:table-row-group">
+                            @php
+                                $currentGroupedItemId = null;
+                            @endphp
+
                             @foreach ($requests as $request)
+                                @if ($itemGrouping === 'grouped' && $currentGroupedItemId !== $request->item_id)
+                                    @php
+                                        $currentGroupedItemId = $request->item_id;
+                                    @endphp
+
+                                    <tr class="block bg-violet-50/70 text-sm text-violet-900 dark:bg-violet-950/30 dark:text-violet-100 md:table-row">
+                                        <td colspan="5" class="block px-4 py-3 font-bold md:table-cell md:px-5">
+                                            {{ $request->item->name }}
+                                            <span class="ml-2 text-xs font-semibold text-violet-700/70 dark:text-violet-200/80">{{ $request->item->categoryRecord?->name ?? 'No category' }}</span>
+                                        </td>
+                                    </tr>
+                                @endif
+
                                 <tr class="block p-4 text-sm text-slate-700 dark:text-slate-300 md:table-row md:p-0">
                                     <td class="block py-2 md:table-cell md:px-5 md:py-4">
                                         <p class="mb-1 text-[11px] font-semibold uppercase text-slate-400 md:hidden">Item</p>
@@ -70,10 +117,11 @@
                                         &#8369;{{ number_format($request->total_price, 2) }}
                                     </td>
                                     <td class="block pt-3 md:table-cell md:px-5 md:py-4">
-                                        <div class="grid grid-cols-3 gap-2 md:flex md:justify-end">
-                                            <a href="{{ route('rental-requests.show', $request) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">View</a>
-                                            <button wire:click="approveRequest({{ $request->id }})" class="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700">Approve</button>
-                                            <button wire:click="rejectRequest({{ $request->id }})" class="rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700">Reject</button>
+                                        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4 md:flex md:justify-end">
+                                            <a href="{{ route('rental-requests.show', $request) }}" class="inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">View</a>
+                                            <a href="{{ route('rental-requests.item', $request->item) }}" class="inline-flex items-center justify-center rounded-md border border-violet-200 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:border-violet-900/60 dark:text-violet-200 dark:hover:bg-violet-900/30">History</a>
+                                            <button wire:click="approveRequest({{ $request->id }})" class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700">Approve</button>
+                                            <button wire:click="rejectRequest({{ $request->id }})" class="inline-flex items-center justify-center rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700">Reject</button>
                                         </div>
                                     </td>
                                 </tr>

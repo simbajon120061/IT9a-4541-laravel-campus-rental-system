@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Category;
 use App\Models\Rental;
 use App\Notifications\RentalRequestDecisionNotification;
 use Illuminate\Contracts\View\View;
@@ -17,7 +18,28 @@ class ListerRentalRequests extends Component
 
     public string $search = '';
 
+    public string $categoryFilter = 'all';
+
+    public string $itemGrouping = 'table';
+
+    public string $dateSort = 'newest';
+
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingItemGrouping(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateSort(): void
     {
         $this->resetPage();
     }
@@ -90,13 +112,29 @@ class ListerRentalRequests extends Component
             });
         }
 
+        if ($this->categoryFilter !== 'all' && ctype_digit($this->categoryFilter)) {
+            $baseQuery->whereHas('item', fn ($query) => $query->where('category_id', (int) $this->categoryFilter));
+        }
+
         $requestsQuery = (clone $baseQuery)
-            ->where('status', Rental::STATUS_PENDING)
-            ->latest('created_at');
+            ->where('status', Rental::STATUS_PENDING);
+
+        if ($this->itemGrouping === 'grouped') {
+            $requestsQuery->orderBy('item_id');
+        }
+
+        $requestsQuery->orderBy('created_at', $this->dateSort === 'oldest' ? 'asc' : 'desc');
 
         return view('livewire.lister-rental-requests', [
             'requests' => $requestsQuery->paginate(10),
             'pendingCount' => (clone $requestsQuery)->count(),
+            'categoryOptions' => Category::query()
+                ->whereHas('items', function ($query): void {
+                    $query->where('user_id', Auth::id())
+                        ->whereHas('rentals', fn ($rentalQuery) => $rentalQuery->where('status', Rental::STATUS_PENDING));
+                })
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'managedCount' => (clone $baseQuery)
                 ->whereIn('status', [Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE])
                 ->count(),

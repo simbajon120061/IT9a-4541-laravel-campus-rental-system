@@ -105,10 +105,13 @@ class PortalPagesTest extends TestCase
             ->assertSee('Name')
             ->assertSee('h-[calc(100vh-4rem)]', false)
             ->assertSee('grid-rows-[auto_minmax(0,1fr)]', false)
-            ->assertSee('md:grid-cols-[minmax(18rem,34vw)_minmax(0,1fr)]', false)
-            ->assertSee('max-h-24 space-y-1 overflow-y-auto', false)
-            ->assertSee('md:max-h-none md:flex-1', false)
-            ->assertSee('hidden md:flex', false)
+            ->assertSee('xl:grid-cols-[22rem_minmax(0,1fr)]', false)
+            ->assertSee('min-h-0 flex-1 space-y-1 overflow-y-auto', false)
+            ->assertDontSee('max-h-24 space-y-1 overflow-y-auto', false)
+            ->assertDontSee('sm:max-h-48', false)
+            ->assertSee('hidden xl:flex', false)
+            ->assertDontSee('hidden md:flex', false)
+            ->assertDontSee('md:grid-cols-[minmax(18rem,34vw)_minmax(0,1fr)]', false)
             ->assertDontSee('University of Mindanao community marketplace')
             ->assertSee('Select a conversation.')
             ->assertSee('Click a rental conversation to read the full thread.')
@@ -187,7 +190,7 @@ class PortalPagesTest extends TestCase
             ->assertSet('selectedRentalId', $labRental->id)
             ->assertSee('Open rental thread')
             ->assertSee('Back to conversations')
-            ->assertSee('hidden md:flex', false)
+            ->assertSee('hidden xl:flex', false)
             ->assertSee('min-h-0 flex-1 space-y-3 overflow-y-auto', false)
             ->assertSee('Lab Coat')
             ->assertSee('Please return tomorrow.')
@@ -197,6 +200,39 @@ class PortalPagesTest extends TestCase
             ->set('unreadOnly', true)
             ->assertSee('No conversations found.')
             ->assertDontSee('I will bring it later.');
+    }
+
+    public function test_lister_messages_page_can_open_a_rental_from_query_parameter(): void
+    {
+        $owner = User::factory()->create(['name' => 'Owner User']);
+        $renter = User::factory()->create(['name' => 'Renter User']);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Open Front Blazer',
+            'description' => 'Formal blazer',
+            'condition' => 'Good',
+            'price' => 150,
+            'status' => 'available',
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(2),
+            'total_price' => 150,
+            'paid_amount' => 150,
+            'payment_status' => Rental::PAYMENT_STATUS_FULLY_PAID,
+            'status' => Rental::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('lister.messages', ['rental' => $rental->id]))
+            ->assertOk()
+            ->assertSee('Open Front Blazer')
+            ->assertSee('Renter User')
+            ->assertSee('Open rental thread');
     }
 
     public function test_messages_page_can_send_messages_with_success_indication(): void

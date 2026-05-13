@@ -79,70 +79,11 @@
                                     </button>
                                 </div>
                             @else
-                                <button wire:click="editSchedule" class="rounded-lg border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50">
+                                <button wire:click="editSchedule" class="rounded-lg border border-blue-200 px-3 py-2 mb-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50">
                                     Edit Dates
                                 </button>
                             @endif
                         @endif
-                    </div>
-                    <dl class="mt-4 grid gap-4 sm:grid-cols-2">
-                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Item</dt>
-                            <dd class="mt-2 text-sm font-semibold text-slate-900">{{ $rental->item->name }}</dd>
-                        </div>
-                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rental Status</dt>
-                            <dd class="mt-2">
-                                @if ($rental->status === 'pending')
-                                    <span class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Pending Request</span>
-                                @elseif ($rental->status === 'approved')
-                                    <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">On Process</span>
-                                @elseif ($rental->status === 'active')
-                                    <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Active Loan</span>
-                                @else
-                                    <span class="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Rejected</span>
-                                @endif
-                            </dd>
-                        </div>
-                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Start Date</dt>
-                            <dd class="mt-2 text-sm font-semibold text-slate-900">
-                                @if ($isEditingSchedule)
-                                    <input type="date" wire:model="editableStartDate" class="w-full rounded-md border-slate-300 text-sm font-semibold focus:border-blue-500 focus:ring-blue-500">
-                                    @error('editableStartDate') <p class="mt-1 text-xs font-medium text-rose-600">{{ $message }}</p> @enderror
-                                @else
-                                    {{ $rental->start_date->format('M d, Y') }}
-                                @endif
-                            </dd>
-                        </div>
-                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">End Date</dt>
-                            <dd class="mt-2 text-sm font-semibold text-slate-900">
-                                @if ($isEditingSchedule)
-                                    <input type="date" wire:model="editableEndDate" class="w-full rounded-md border-slate-300 text-sm font-semibold focus:border-blue-500 focus:ring-blue-500">
-                                    @error('editableEndDate') <p class="mt-1 text-xs font-medium text-rose-600">{{ $message }}</p> @enderror
-                                @else
-                                    {{ $rental->end_date->format('M d, Y') }}
-                                @endif
-                            </dd>
-                        </div>
-                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Days Requested</dt>
-                            <dd class="mt-2 text-sm font-semibold text-slate-900">{{ $daysRequested }} day(s)</dd>
-                        </div>
-                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Amount</dt>
-                            <dd class="mt-2 text-sm font-semibold text-slate-900">&#8369;{{ number_format($rental->total_price, 2) }}</dd>
-                        </div>
-                    </dl>
-                </div>
-
-                <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div class="flex items-center justify-between gap-3 px-6 py-4">
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-900">Rented Item</h2>
-                            <p class="text-sm text-slate-600">{{ $rental->item->name }}</p>
-                        </div>
                     </div>
                     <div class="aspect-[16/9] bg-slate-100">
                         @if ($rental->item->imageUrl())
@@ -157,7 +98,59 @@
                             </div>
                         @endif
                     </div>
+                    <dl class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Item</dt>
+                            <dd class="mt-2 text-sm font-semibold text-slate-900">{{ $rental->item->name }}</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rental Status</dt>
+                            <dd class="mt-2">
+                                @if ($rental->status === 'pending')
+                                    <span class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Pending Request</span>
+                                @elseif ($rental->status === 'approved')
+                                    <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">On Process</span>
+                                @elseif ($rental->status === 'active')
+                                    <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Active Loan</span>
+                                @else
+                                    <span class="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Rejected</span>
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Start Date</dt>
+                            <dd class="mt-2 text-sm font-semibold text-slate-900">
+                                @if ($isEditingSchedule)
+                                    <input type="date" wire:model="editableStartDate" class="w-full rounded-md border-slate-300 text-sm font-semibold focus:border-blue-500 focus:ring-blue-500">
+                                    @error('editableStartDate') <p class="mt-1 text-xs font-medium text-rose-600">{{ $message }}</p> @enderror
+                                @else
+                                    {{ $rental->start_date->format('M d, Y') }}
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">End Date</dt>
+                            <dd class="mt-2 text-sm font-semibold text-slate-900">
+                                @if ($isEditingSchedule)
+                                    <input type="date" wire:model="editableEndDate" class="w-full rounded-md border-slate-300 text-sm font-semibold focus:border-blue-500 focus:ring-blue-500">
+                                    @error('editableEndDate') <p class="mt-1 text-xs font-medium text-rose-600">{{ $message }}</p> @enderror
+                                @else
+                                    {{ $rental->end_date->format('M d, Y') }}
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Days Requested</dt>
+                            <dd class="mt-2 text-sm font-semibold text-slate-900">{{ $daysRequested }} day(s)</dd>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Amount</dt>
+                            <dd class="mt-2 text-sm font-semibold text-slate-900">&#8369;{{ number_format($rental->total_price, 2) }}</dd>
+                        </div>
+                    </dl>
                 </div>
+
+                
             </div>
 
             <div class="space-y-6">
@@ -191,6 +184,7 @@
                                 Reject Request
                             </button>
                         </div>
+                        
                     @elseif (! $isOwner)
                         <p class="mt-3 text-sm text-slate-600">Only the item owner can approve or reject this request. You can monitor updates here.</p>
                     @else
@@ -218,74 +212,29 @@
                         </div>
                     </div>
                 @endif
-            </div>
-        </div>
-
-        <div id="messages" class="mt-6 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Messages</h2>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Owner and client conversation for this rental.</p>
-                </div>
-                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">40 characters max</span>
-            </div>
-
-            <div class="mt-5 max-h-80 space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
-                @forelse ($messages as $message)
-                    @php
-                        $isMine = (int) $message->sender_id === (int) auth()->id();
-                    @endphp
-                    <div class="flex {{ $isMine ? 'justify-end' : 'justify-start' }}">
-                        <div class="{{ $isMine ? 'bg-blue-600 text-white' : 'bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100' }} max-w-[75%] rounded-xl px-4 py-3 shadow-sm">
-                            <div class="mb-1 flex items-center gap-2 text-xs {{ $isMine ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400' }}">
-                                <span class="font-semibold">{{ $message->sender->name }}</span>
-                                <span>{{ $message->created_at->format('M d, g:i A') }}</span>
+                
+                @if ($isOwner)
+                        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <div class="mt-1 grid gap-3">
+                                <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-200 px-4 py-2 text-m font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
+                                    Open Chat
+                                </a>
+                                <a href="{{ route('lister.payments', ['filter' => $rental->payment_status]) }}#payment-{{ $rental->id }}" class="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-m font-semibold text-white transition hover:bg-blue-700">
+                                    Add Payment
+                                </a>
                             </div>
-                            <p class="break-words text-sm font-medium">{{ $message->body }}</p>
-                            @if (! $isMine)
-                                <button wire:click="openMessageReportForm({{ $message->id }})" class="{{ $isMine ? 'text-blue-100 hover:text-white' : 'text-rose-600 hover:text-rose-700 dark:text-rose-300 dark:hover:text-rose-200' }} mt-2 text-xs font-semibold">
-                                    Report Message
-                                </button>
-                            @endif
                         </div>
-                    </div>
-                @empty
-                    <p class="py-8 text-center text-sm text-slate-500 dark:text-slate-400">No messages yet.</p>
-                @endforelse
-            </div>
-
-            <form wire:submit="sendMessage" class="mt-4">
-                <div class="flex flex-col gap-3 sm:flex-row">
-                    <div class="flex-1">
-                        <input
-                            type="text"
-                            wire:model.live="messageText"
-                            maxlength="40"
-                            placeholder="Type a message..."
-                            class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/30"
-                        >
-                        <div class="mt-2 flex items-center justify-between gap-3 text-xs">
-                            @error('messageText')
-                                <span class="font-semibold text-rose-600 dark:text-rose-400">{{ $message }}</span>
-                            @else
-                                <span class="text-slate-500 dark:text-slate-400">Saved permanently with this rental.</span>
-                            @enderror
-                            <span class="text-slate-500 dark:text-slate-400">{{ strlen($messageText) }}/40</span>
+                    @else (! $isOwner)
+                        <div class="mt-1 grid gap-3">
+                            <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-200 px-4 py-2 text-m font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
+                                Open Chat
+                            </a>
                         </div>
-                    </div>
-                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                        Send
-                    </button>
+                    @endif
                 </div>
-                @if($messageNotice)
-                    <x-floating-action-notice
-                        :message="$messageNotice"
-                        class="sm:ml-auto sm:w-32"
-                        wire:key="message-notice-{{ $noticeToken }}"
-                    />
-                @endif
-            </form>
 
+                
+            </div>
         </div>
     </div>
 </div>
