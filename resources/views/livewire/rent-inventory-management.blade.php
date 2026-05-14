@@ -218,9 +218,6 @@
                                             <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                                                 View Request
                                             </a>
-                                            <a href="{{ route('lister.payments', ['filter' => $rental->payment_status]) }}#payment-{{ $rental->id }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
-                                                View Payment
-                                            </a>
                                             <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:border-violet-900/60 dark:text-violet-200 dark:hover:bg-violet-900/30">
                                                 Message
                                             </a>

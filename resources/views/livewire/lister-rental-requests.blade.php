@@ -1,6 +1,6 @@
 <div class="bg-slate-50 py-8 text-slate-950 dark:bg-slate-950 dark:text-slate-100">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto] lg:items-end">
             <div class="min-w-0">
                 <p class="text-sm font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300">Lister Portal</p>
                 <h1 class="mt-2 text-3xl font-extrabold tracking-normal text-slate-950 dark:text-white sm:text-4xl">Pending Rental Requests</h1>
@@ -10,6 +10,10 @@
             <div class="rounded-lg border border-amber-200 bg-amber-50 px-5 py-3 text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
                 <span class="text-sm font-semibold">{{ $pendingCount }} pending request(s)</span>
             </div>
+
+            <a href="{{ route('lister.rental-logs') }}" class="inline-flex w-full items-center justify-center rounded-lg border border-blue-200 px-5 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30 sm:w-auto">
+                View Rental Logs
+            </a>
 
             <a href="{{ route('lister.inventory', ['filter' => 'approved']) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto">
                 Manage Approved Rentals ({{ $managedCount }})
