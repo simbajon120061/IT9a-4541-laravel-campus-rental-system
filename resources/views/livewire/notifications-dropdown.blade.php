@@ -32,8 +32,15 @@
 
         <div class="max-h-96 overflow-y-auto">
             @forelse($notifications as $notification)
+                @php
+                    $notificationUrl = $notification->data['url'] ?? null;
+
+                    if (! $notificationUrl && Auth::user()?->isAdministrator() && (isset($notification->data['report_id']) || isset($notification->data['appeal_id']))) {
+                        $notificationUrl = route('admin.reports', [], false);
+                    }
+                @endphp
                 <a
-                    href="{{ route('my-listings') }}"
+                    href="{{ $notificationUrl ?: route('my-listings') }}"
                     wire:click.prevent="openNotification('{{ $notification->id }}')"
                     class="block border-b border-slate-100 px-4 py-3 transition hover:bg-slate-50 {{ is_null($notification->read_at) ? 'bg-blue-50/50' : '' }}"
                 >

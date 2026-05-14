@@ -40,6 +40,9 @@
                     && Auth::check()
                     && ! Auth::user()?->isAdministrator()
                 );
+            $usesAdminSidebar = Auth::check()
+                && Auth::user()?->isAdministrator()
+                && request()->routeIs('admin.*', 'item.view', 'profile.show');
         @endphp
 
         <x-banner />
@@ -52,8 +55,8 @@
             @livewire('navigation-menu')
 
             <div
-                class="{{ $usesListerSidebar ? 'xl:pt-20' : '' }}"
-                @if ($usesListerSidebar)
+                class="{{ $usesListerSidebar || $usesAdminSidebar ? 'xl:pt-20' : '' }}"
+                @if ($usesListerSidebar || $usesAdminSidebar)
                     :class="sidebarCollapsed ? 'xl:pl-24' : 'xl:pl-72'"
                 @endif
             >

@@ -17,6 +17,10 @@ class NotificationsDropdown extends Component
         $notification = Auth::user()->notifications()->find($notificationId);
 
         if (! $notification) {
+            if (Auth::user()?->isAdministrator()) {
+                return redirect()->route('admin.reports');
+            }
+
             return redirect()->route('my-listings');
         }
 
@@ -28,6 +32,10 @@ class NotificationsDropdown extends Component
 
         if ($url) {
             return redirect()->to($url);
+        }
+
+        if (Auth::user()?->isAdministrator() && (isset($notificationData['report_id']) || isset($notificationData['appeal_id']))) {
+            return redirect()->route('admin.reports');
         }
 
         $rentalId = $notificationData['rental_id'] ?? $this->resolveRentalIdFromNotificationData($notificationData);

@@ -73,6 +73,9 @@ class AdminAccessAndSupportPagesTest extends TestCase
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('Admin Dashboard')
+            ->assertSee('Campus')
+            ->assertSee('Rent')
+            ->assertDontSee('Messages')
             ->assertSee('Total Users')
             ->assertSee('Total Items')
             ->assertSee('Pending Requests');

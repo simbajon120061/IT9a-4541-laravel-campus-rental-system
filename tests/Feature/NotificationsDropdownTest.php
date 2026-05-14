@@ -212,4 +212,31 @@ class NotificationsDropdownTest extends TestCase
 
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
     }
+
+    public function test_admin_review_notification_redirects_to_reports_and_complaints(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $notification = $admin->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'App\\Notifications\\AdminReviewQueueNotification',
+            'data' => [
+                'title' => 'New report submitted',
+                'message' => 'A new report needs admin review.',
+                'report_id' => 10,
+                'url' => route('admin.reports', [], false),
+            ],
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(NotificationsDropdown::class)
+            ->assertSee(route('admin.reports', [], false));
+
+        Livewire::test(NotificationsDropdown::class)
+            ->call('openNotification', $notification->id)
+            ->assertRedirect(route('admin.reports', [], false));
+
+        $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
+    }
 }

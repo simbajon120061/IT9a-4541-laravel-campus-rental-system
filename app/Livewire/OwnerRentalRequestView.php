@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Rental;
 use App\Models\Report;
 use App\Models\User;
+use App\Notifications\AdminReviewQueueNotification;
 use App\Notifications\RentalMessageSentNotification;
 use App\Notifications\RentalRequestDecisionNotification;
 use App\Notifications\ReportSubmittedNotification;
@@ -286,6 +287,16 @@ class OwnerRentalRequestView extends Component
             reportType: $report->type,
             reason: $report->reason,
         ));
+
+        User::query()
+            ->where('is_admin', true)
+            ->get()
+            ->each
+            ->notify(new AdminReviewQueueNotification(
+                title: 'New report submitted',
+                message: "{$report->reporter?->name} submitted a {$report->type} report for admin review.",
+                reportId: $report->id,
+            ));
 
         $this->cancelReport();
         session()->flash('message', 'Report submitted. An admin will verify it.');

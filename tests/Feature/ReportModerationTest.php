@@ -12,6 +12,7 @@ use App\Models\RentalMessage;
 use App\Models\Report;
 use App\Models\User;
 use App\Notifications\AccountRestrictedNotification;
+use App\Notifications\AdminReviewQueueNotification;
 use App\Notifications\ReportActionTakenNotification;
 use App\Notifications\ReportSubmittedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +27,7 @@ class ReportModerationTest extends TestCase
     public function test_user_can_report_an_item_and_the_item_owner(): void
     {
         [, $renter, $item] = $this->createRentalScenario();
+        $admin = User::factory()->admin()->create();
 
         Notification::fake();
         $this->actingAs($renter);
@@ -60,6 +62,18 @@ class ReportModerationTest extends TestCase
                     && $payload['url'] === route('my-listings');
             }
         );
+        Notification::assertSentTo(
+            $admin,
+            AdminReviewQueueNotification::class,
+            function (AdminReviewQueueNotification $notification) use ($admin): bool {
+                $payload = $notification->toArray($admin);
+
+                return $notification->title === 'New report submitted'
+                    && $notification->reportId !== null
+                    && str_contains($payload['message'], 'item report')
+                    && $payload['url'] === route('admin.reports', [], false);
+            }
+        );
 
         Livewire::test(ViewItem::class, ['id' => $item->id])
             ->call('openReportForm', Report::TYPE_USER)
@@ -77,6 +91,7 @@ class ReportModerationTest extends TestCase
     public function test_user_can_report_a_message(): void
     {
         [$owner, $renter, , $rental] = $this->createRentalScenario();
+        $admin = User::factory()->admin()->create();
         $message = RentalMessage::query()->create([
             'rental_id' => $rental->id,
             'sender_id' => $owner->id,
@@ -110,6 +125,18 @@ class ReportModerationTest extends TestCase
                     && $payload['title'] === 'Report received'
                     && str_contains($payload['message'], 'A user submitted a report')
                     && ! str_contains($payload['message'], $renter->name);
+            }
+        );
+        Notification::assertSentTo(
+            $admin,
+            AdminReviewQueueNotification::class,
+            function (AdminReviewQueueNotification $notification) use ($admin): bool {
+                $payload = $notification->toArray($admin);
+
+                return $notification->title === 'New report submitted'
+                    && $notification->reportId !== null
+                    && str_contains($payload['message'], 'message report')
+                    && $payload['url'] === route('admin.reports', [], false);
             }
         );
     }

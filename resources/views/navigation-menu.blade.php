@@ -16,6 +16,15 @@
     $portalHomeRoute = Auth::user()?->isAdministrator()
         ? 'admin.dashboard'
         : ($isListerPortal ? 'lister.dashboard' : 'renter.dashboard');
+    $isAdminPortal = Auth::check()
+        && Auth::user()?->isAdministrator()
+        && request()->routeIs('admin.*', 'item.view', 'profile.show');
+    $adminLinks = [
+        ['route' => 'admin.dashboard', 'label' => 'Dashboard', 'active' => ['admin.dashboard'], 'icon' => 'dashboard'],
+        ['route' => 'admin.marketplace', 'label' => 'Marketplace', 'active' => ['admin.marketplace', 'item.view'], 'icon' => 'marketplace'],
+        ['route' => 'admin.users', 'label' => 'User Management', 'active' => ['admin.users'], 'icon' => 'users'],
+        ['route' => 'admin.reports', 'label' => 'Reports & Complaints', 'active' => ['admin.reports'], 'icon' => 'reports'],
+    ];
     $listerLinks = [
         ['route' => 'lister.dashboard', 'label' => 'Lister Dashboard', 'active' => ['lister.dashboard'], 'icon' => 'dashboard'],
         ['route' => 'lister.my-listings', 'label' => 'My Listings', 'active' => ['lister.my-listings', 'my-listings', 'add-item', 'edit-item'], 'icon' => 'listings'],
@@ -26,7 +35,202 @@
     ];
 @endphp
 
-@if ($isListerPortal && Auth::check() && ! Auth::user()?->isAdministrator())
+@if ($isAdminPortal)
+<div>
+    <aside
+        class="fixed inset-y-0 left-0 z-50 hidden border-r border-slate-200 bg-white/95 px-5 py-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl transition-all duration-300 dark:border-slate-800 dark:bg-slate-950/95 xl:flex xl:flex-col"
+        :class="sidebarCollapsed ? 'w-24' : 'w-72'"
+    >
+        <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'justify-between gap-3'">
+            <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-2.5" :class="sidebarCollapsed ? 'justify-center' : ''">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 text-white shadow-lg shadow-blue-600/25">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 8-9-5-9 5m18 0-9 5m9-5v8l-9 5m0-8L3 8m9 5v8M3 8v8l9 5" />
+                    </svg>
+                </span>
+                <span x-show="!sidebarCollapsed" x-transition class="whitespace-nowrap text-xl font-extrabold text-blue-600 dark:text-blue-400">Campus<span class="text-violet-600 dark:text-violet-400">Rent</span></span>
+            </a>
+
+            <button
+                x-show="!sidebarCollapsed"
+                @click="sidebarCollapsed = true"
+                type="button"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+            >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+        </div>
+
+        <button
+            x-show="sidebarCollapsed"
+            @click="sidebarCollapsed = false"
+            type="button"
+            class="mt-5 inline-flex h-10 w-10 items-center justify-center self-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+        >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+
+        <div
+            class="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 transition dark:border-slate-800 dark:bg-slate-900/70"
+            :class="sidebarCollapsed ? 'px-2 text-center' : ''"
+        >
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" :class="sidebarCollapsed ? 'sr-only' : ''">Signed in as</p>
+            <p class="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white" :class="sidebarCollapsed ? 'mt-0' : ''">
+                <span x-show="!sidebarCollapsed">{{ Auth::user()->name }}</span>
+                <span x-show="sidebarCollapsed">{{ collect(explode(' ', Auth::user()->name))->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->implode('') }}</span>
+            </p>
+        </div>
+
+        <nav class="mt-6 flex flex-1 flex-col gap-1.5">
+            @foreach ($adminLinks as $link)
+                <a
+                    href="{{ route($link['route']) }}"
+                    class="{{ request()->routeIs(...$link['active']) ? 'bg-slate-950 text-white shadow-lg shadow-slate-900/15 dark:bg-white dark:text-slate-950' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white' }} flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold transition"
+                    :class="sidebarCollapsed ? 'justify-center px-3' : ''"
+                    title="{{ $link['label'] }}"
+                >
+                    @if ($link['icon'] === 'dashboard')
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l8-8 8 8M5 10v10h14V10" /></svg>
+                    @elseif ($link['icon'] === 'marketplace')
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    @elseif ($link['icon'] === 'users')
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 0 0-4-4h-1M9 20H4v-2a4 4 0 0 1 4-4h1m6-4a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /></svg>
+                    @else
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 4.3 2.8 17.3A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.7L13.7 4.3a2 2 0 0 0-3.4 0Z" /></svg>
+                    @endif
+                    <span x-show="!sidebarCollapsed" x-transition class="truncate">{{ $link['label'] }}</span>
+                </a>
+            @endforeach
+        </nav>
+    </aside>
+
+    <header
+        class="fixed right-0 top-0 z-40 hidden h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-8 shadow-sm shadow-slate-900/5 backdrop-blur-xl transition-all duration-300 dark:border-slate-800 dark:bg-slate-950/90 xl:flex"
+        :class="sidebarCollapsed ? 'left-24' : 'left-72'"
+    >
+        <div class="min-w-0">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Administration</p>
+            <p class="truncate text-sm font-semibold text-slate-700 dark:text-slate-300">{{ Auth::user()->name }}</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            @livewire('notifications-dropdown')
+            <x-dark-mode-toggle />
+            <x-dropdown align="right" width="48">
+                <x-slot name="trigger">
+                    <button type="button" class="group inline-flex items-center rounded-full px-1 py-1 ring-1 ring-transparent transition hover:ring-slate-200 dark:hover:ring-slate-700">
+                        <x-profile-avatar :user="Auth::user()" size="nav" showChevron />
+                    </button>
+                </x-slot>
+                <x-slot name="content">
+                    <x-dropdown-link href="{{ route('profile.show') }}">{{ __('Profile Settings') }}</x-dropdown-link>
+                    <form method="POST" action="{{ route('logout') }}" x-data>
+                        @csrf
+                        <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">{{ __('Log Out') }}</x-dropdown-link>
+                    </form>
+                </x-slot>
+            </x-dropdown>
+        </div>
+    </header>
+
+    <nav class="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:block xl:hidden">
+        <div class="flex h-16 items-center justify-between gap-4 px-4 lg:px-6">
+            <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3" title="Admin Dashboard">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l8-8 8 8M5 10v10h14V10" /></svg>
+                </span>
+                <span class="hidden truncate text-xl font-extrabold text-slate-950 md:inline dark:text-white">Admin</span>
+            </a>
+
+            <div class="flex min-w-0 flex-1 justify-center">
+                <div class="flex min-w-0 items-center gap-1 rounded-full bg-slate-50 p-1 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                    @foreach ($adminLinks as $link)
+                        <a
+                            href="{{ route($link['route']) }}"
+                            class="{{ request()->routeIs(...$link['active']) ? 'bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100' }} inline-flex h-10 min-w-10 items-center justify-center rounded-full px-3 text-sm font-semibold transition"
+                            aria-label="{{ $link['label'] }}"
+                            title="{{ $link['label'] }}"
+                        >
+                            @if ($link['icon'] === 'dashboard')
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l8-8 8 8M5 10v10h14V10" /></svg>
+                            @elseif ($link['icon'] === 'marketplace')
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                            @elseif ($link['icon'] === 'users')
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 0 0-4-4h-1M9 20H4v-2a4 4 0 0 1 4-4h1m6-4a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /></svg>
+                            @else
+                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 4.3 2.8 17.3A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.7L13.7 4.3a2 2 0 0 0-3.4 0Z" /></svg>
+                            @endif
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2">
+                @livewire('notifications-dropdown')
+                <x-dark-mode-toggle />
+                <x-dropdown align="right" width="48">
+                    <x-slot name="trigger">
+                        <button type="button" class="group inline-flex items-center rounded-full px-1 py-1 ring-1 ring-transparent transition hover:ring-slate-200 dark:hover:ring-slate-700">
+                            <x-profile-avatar :user="Auth::user()" size="nav" showChevron />
+                        </button>
+                    </x-slot>
+                    <x-slot name="content">
+                        <x-dropdown-link href="{{ route('profile.show') }}">{{ __('Profile Settings') }}</x-dropdown-link>
+                        <form method="POST" action="{{ route('logout') }}" x-data>
+                            @csrf
+                            <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">{{ __('Log Out') }}</x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+            </div>
+        </div>
+    </nav>
+
+    <nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:hidden">
+        <div class="flex h-16 items-center justify-between px-4">
+            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l8-8 8 8M5 10v10h14V10" /></svg>
+                </span>
+                <span class="text-xl font-extrabold text-slate-950 dark:text-white">Admin</span>
+            </a>
+            <div class="flex items-center gap-1.5">
+                @livewire('notifications-dropdown')
+                <x-dropdown align="right" width="48">
+                    <x-slot name="trigger">
+                        <button type="button" class="group inline-flex items-center rounded-full px-1 py-1 ring-1 ring-transparent transition hover:ring-slate-200 dark:hover:ring-slate-700">
+                            <x-profile-avatar :user="Auth::user()" size="nav" />
+                        </button>
+                    </x-slot>
+                    <x-slot name="content">
+                        <x-dropdown-link href="{{ route('profile.show') }}">{{ __('Profile Settings') }}</x-dropdown-link>
+                        <form method="POST" action="{{ route('logout') }}" x-data>
+                            @csrf
+                            <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">{{ __('Log Out') }}</x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+                <button @click="open = !open" class="rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900" aria-label="Toggle navigation menu">
+                    <svg class="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path :class="{ 'hidden': open, 'inline-flex': !open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /><path :class="{ 'hidden': !open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+        </div>
+        <div x-show="open" x-cloak class="space-y-2 border-t border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            @foreach ($adminLinks as $link)
+                <a href="{{ route($link['route']) }}" class="{{ request()->routeIs(...$link['active']) ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900' }} block rounded-lg px-4 py-3 text-sm font-bold">{{ $link['label'] }}</a>
+            @endforeach
+        </div>
+    </nav>
+</div>
+@elseif ($isListerPortal && Auth::check() && ! Auth::user()?->isAdministrator())
 <div>
     <aside
         class="fixed inset-y-0 left-0 z-50 hidden border-r border-slate-200 bg-white/95 px-5 py-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl transition-all duration-300 dark:border-slate-800 dark:bg-slate-950/95 xl:flex xl:flex-col"
@@ -300,11 +504,13 @@
         <div class="order-2 ml-auto flex items-center justify-end gap-2 sm:order-none sm:flex-1 sm:gap-3">
             @auth
                 @livewire('notifications-dropdown')
-                <a href="{{ route('renter.messages') }}" class="{{ request()->routeIs('renter.messages') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm shadow-blue-600/20 ring-transparent' : 'bg-slate-50 text-slate-600 ring-slate-200 hover:bg-white hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700 dark:hover:text-white' }} relative inline-flex h-10 w-10 items-center justify-center rounded-full ring-1 transition" aria-label="Messages">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10.5h8M8 14h5m-8 5 3.5-3.5H18a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v5.5a3 3 0 0 0 2 2.83V19Z" />
-                    </svg>
-                </a>
+                @unless (Auth::user()?->isAdministrator())
+                    <a href="{{ route('renter.messages') }}" class="{{ request()->routeIs('renter.messages') ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-sm shadow-blue-600/20 ring-transparent' : 'bg-slate-50 text-slate-600 ring-slate-200 hover:bg-white hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700 dark:hover:text-white' }} relative inline-flex h-10 w-10 items-center justify-center rounded-full ring-1 transition" aria-label="Messages">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10.5h8M8 14h5m-8 5 3.5-3.5H18a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v5.5a3 3 0 0 0 2 2.83V19Z" />
+                        </svg>
+                    </a>
+                @endunless
                 <x-dark-mode-toggle class="hidden sm:inline-flex" />
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">

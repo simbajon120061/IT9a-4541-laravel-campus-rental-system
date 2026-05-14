@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Item;
 use App\Models\ItemAppeal;
 use App\Models\User;
+use App\Notifications\AdminReviewQueueNotification;
 use App\Notifications\AppealDecisionNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -42,6 +43,7 @@ class AdminMarketplaceModerationTest extends TestCase
             'admin_removal_reason' => 'Prohibited listing',
         ]);
 
+        Notification::fake();
         $this->actingAs($owner);
 
         Livewire::test(MyListings::class)
@@ -54,6 +56,17 @@ class AdminMarketplaceModerationTest extends TestCase
         $appeal = ItemAppeal::query()->firstOrFail();
 
         $this->assertSame(ItemAppeal::STATUS_PENDING, $appeal->status);
+        Notification::assertSentTo(
+            $admin,
+            AdminReviewQueueNotification::class,
+            function (AdminReviewQueueNotification $notification) use ($admin): bool {
+                $payload = $notification->toArray($admin);
+
+                return $notification->title === 'New complaint submitted'
+                    && $notification->appealId !== null
+                    && $payload['url'] === route('admin.reports', [], false);
+            }
+        );
 
         Notification::fake();
         $this->actingAs($admin);

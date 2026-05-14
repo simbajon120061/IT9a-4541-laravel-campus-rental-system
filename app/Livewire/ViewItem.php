@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\Item;
 use App\Models\Rental;
 use App\Models\Report;
+use App\Models\User;
+use App\Notifications\AdminReviewQueueNotification;
 use App\Notifications\RentalRequestedNotification;
 use App\Notifications\ReportSubmittedNotification;
 use Carbon\Carbon;
@@ -300,6 +302,16 @@ class ViewItem extends Component
             reason: $report->reason,
             itemName: $report->reportedItem ? $this->item->name : null,
         ));
+
+        User::query()
+            ->where('is_admin', true)
+            ->get()
+            ->each
+            ->notify(new AdminReviewQueueNotification(
+                title: 'New report submitted',
+                message: "{$report->reporter?->name} submitted a {$report->type} report for admin review.",
+                reportId: $report->id,
+            ));
 
         $this->cancelReport();
         session()->flash('message', 'Report submitted. An admin will verify it.');

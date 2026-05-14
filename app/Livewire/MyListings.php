@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\ItemAppeal;
+use App\Models\User;
+use App\Notifications\AdminReviewQueueNotification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -136,11 +138,21 @@ class MyListings extends Component
             return;
         }
 
-        $item->appeals()->create([
+        $appeal = $item->appeals()->create([
             'user_id' => Auth::id(),
             'reason' => trim($validated['appealReason']),
             'details' => trim((string) $validated['appealDetails']) ?: null,
         ]);
+
+        User::query()
+            ->where('is_admin', true)
+            ->get()
+            ->each
+            ->notify(new AdminReviewQueueNotification(
+                title: 'New complaint submitted',
+                message: "{$appeal->user?->name} submitted an appeal for {$item->name}.",
+                appealId: $appeal->id,
+            ));
 
         $this->cancelAppeal();
         session()->flash('message', 'Appeal submitted for admin review.');
