@@ -2,12 +2,11 @@
 
 namespace App\Notifications;
 
-use App\Models\Rental;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Crypt;
 
-class RentalMessageSentNotification extends Notification
+class RentalPaymentStatusNotification extends Notification
 {
     use Queueable;
 
@@ -15,8 +14,10 @@ class RentalMessageSentNotification extends Notification
         public int $rentalId,
         public int $itemId,
         public string $itemName,
-        public string $senderName,
-        public string $messageBody
+        public string $type,
+        public string $message,
+        public float $remainingBalance,
+        public string $dueDate,
     ) {}
 
     /**
@@ -36,25 +37,26 @@ class RentalMessageSentNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $rental = Rental::query()
-            ->whereKey($this->rentalId)
-            ->with('item')
-            ->first();
-        $isOwnerRecipient = $rental && (int) $rental->item?->user_id === (int) $notifiable->id;
-        $url = $isOwnerRecipient
-            ? route('lister.messages', ['rental' => $this->rentalId])
-            : route('renter.messages', ['rental' => $this->rentalId]);
-
         return [
-            'title' => 'New message',
-            'message' => "{$this->senderName}: {$this->messageBody}",
-            'type' => 'message',
+            'title' => $this->title(),
+            'message' => $this->message,
+            'type' => $this->type,
             'encrypted_rental_id' => Crypt::encryptString((string) $this->rentalId),
             'encrypted_item_id' => Crypt::encryptString((string) $this->itemId),
             'item_name' => $this->itemName,
-            'sender_name' => $this->senderName,
-            'message_body' => $this->messageBody,
-            'url' => $url,
+            'remaining_balance' => $this->remainingBalance,
+            'due_date' => $this->dueDate,
+            'url' => route('renter.my-rentals').'#rental-'.$this->rentalId,
         ];
+    }
+
+    private function title(): string
+    {
+        return match ($this->type) {
+            'upcoming_due' => 'Upcoming payment due',
+            'overdue_payment' => 'Overdue payment reminder',
+            'payment_confirmed' => 'Payment confirmed',
+            default => 'Payment update',
+        };
     }
 }

@@ -33,6 +33,22 @@ class MyRentals extends Component
         $this->resetPage();
     }
 
+    public function deleteReturnedRental(int $rentalId): void
+    {
+        abort_unless(Auth::check(), 403);
+
+        $rental = Rental::query()
+            ->whereKey($rentalId)
+            ->where('renter_id', Auth::id())
+            ->where('status', Rental::STATUS_COMPLETED)
+            ->firstOrFail();
+
+        $rental->delete();
+        $this->resetPage();
+
+        session()->flash('message', 'Returned rental deleted successfully.');
+    }
+
     public function render()
     {
         abort_unless(Auth::check(), 403);

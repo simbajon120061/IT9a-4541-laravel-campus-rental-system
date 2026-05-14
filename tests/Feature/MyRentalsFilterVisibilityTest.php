@@ -133,6 +133,92 @@ class MyRentalsFilterVisibilityTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_cancelled_rental_days_left_displays_cancelled_not_overdue(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-14 08:00:00'));
+
+        $renter = User::factory()->create();
+        $owner = User::factory()->create();
+
+        $category = Category::query()->firstOrCreate(
+            ['slug' => 'formal-wear'],
+            ['name' => 'Formal Wear', 'icon' => 'shirt', 'is_active' => true]
+        );
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Light Gray Suit',
+            'description' => 'Formal wear',
+            'price' => 200,
+            'status' => 'available',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->subDay(),
+            'total_price' => 200,
+            'paid_amount' => 0,
+            'payment_status' => Rental::PAYMENT_STATUS_OUTSTANDING,
+            'status' => Rental::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+        ]);
+
+        $this->actingAs($renter);
+
+        Livewire::test(MyRentals::class)
+            ->assertSee('Light Gray Suit')
+            ->assertSee('Cancelled')
+            ->assertDontSee('Overdue')
+            ->assertDontSee('bg-orange-50', false);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_active_rental_ending_today_displays_due_today_not_overdue(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-05-14 19:20:00'));
+
+        $renter = User::factory()->create();
+        $owner = User::factory()->create();
+
+        $category = Category::query()->firstOrCreate(
+            ['slug' => 'formal-wear-due-today'],
+            ['name' => 'Formal Wear', 'icon' => 'shirt', 'is_active' => true]
+        );
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Light Gray Suit',
+            'description' => 'Formal wear',
+            'price' => 200,
+            'status' => 'rented',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => Carbon::parse('2026-05-13')->startOfDay(),
+            'end_date' => Carbon::parse('2026-05-14')->startOfDay(),
+            'total_price' => 200,
+            'paid_amount' => 200,
+            'payment_status' => Rental::PAYMENT_STATUS_FULLY_PAID,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($renter);
+
+        Livewire::test(MyRentals::class)
+            ->assertSee('Light Gray Suit')
+            ->assertSee('Due Today')
+            ->assertDontSee('Overdue');
+
+        Carbon::setTestNow();
+    }
+
     public function test_pending_and_approved_filters_are_separated(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-04-25 08:00:00'));
@@ -332,5 +418,49 @@ class MyRentalsFilterVisibilityTest extends TestCase
             ->assertSee('md:col-span-2 xl:table-cell', false)
             ->assertDontSee('overflow-x-auto', false)
             ->assertDontSee('xl:min-w-[72rem]', false);
+    }
+
+    public function test_returned_rental_shows_delete_button_and_can_be_deleted_by_renter(): void
+    {
+        $renter = User::factory()->create();
+        $owner = User::factory()->create();
+
+        $category = Category::query()->firstOrCreate(
+            ['slug' => 'returned-rentals'],
+            ['name' => 'Returned Rentals', 'icon' => 'box', 'is_active' => true]
+        );
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Returned Blazer',
+            'description' => 'Formal wear',
+            'price' => 150,
+            'status' => 'available',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->subDays(3),
+            'end_date' => now()->subDay(),
+            'total_price' => 300,
+            'paid_amount' => 300,
+            'payment_status' => Rental::PAYMENT_STATUS_FULLY_PAID,
+            'status' => Rental::STATUS_COMPLETED,
+            'completed_at' => now(),
+        ]);
+
+        $this->actingAs($renter);
+
+        Livewire::test(MyRentals::class)
+            ->assertSee('Returned Blazer')
+            ->assertSee('Returned')
+            ->assertSee('Delete')
+            ->call('deleteReturnedRental', $rental->id)
+            ->assertSee('Returned rental deleted successfully.')
+            ->assertDontSee('Returned Blazer');
+
+        $this->assertSoftDeleted('rentals', ['id' => $rental->id]);
     }
 }

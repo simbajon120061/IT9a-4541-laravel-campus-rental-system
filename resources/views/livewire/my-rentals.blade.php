@@ -55,6 +55,12 @@
             </div>
         @endif
 
+        @if (session()->has('message'))
+            <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-200">
+                {{ session('message') }}
+            </div>
+        @endif
+
         <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 sm:rounded-2xl sm:p-5">
             <p class="mb-3 text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">Search Item or Owner</p>
 
@@ -168,9 +174,10 @@
                                         ? (int) ceil($secondsLeft / 86400)
                                         : (int) floor($secondsLeft / 86400);
                                     $isOnProcess = $rental->status === 'approved' || ($rental->status === 'active' && $rental->start_date->isFuture());
-                                    $isDueSoon = $rental->status === 'active' && ! $isOnProcess && $daysLeft >= 0 && $daysLeft <= 7;
-                                    $isOverdue = $daysLeft < 0;
-                                    $rowClass = $isDueSoon ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40' : ($isOverdue ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40' : 'hover:bg-gray-50 dark:hover:bg-slate-800/60');
+                                    $isDueToday = $rental->status === 'active' && ! $isOnProcess && $rental->end_date->isToday();
+                                    $isDueSoon = $rental->status === 'active' && ! $isOnProcess && ! $isDueToday && $daysLeft >= 0 && $daysLeft <= 7;
+                                    $isOverdue = $rental->status === 'active' && ! $isOnProcess && ! $isDueToday && $daysLeft < 0;
+                                    $rowClass = ($isDueToday || $isDueSoon) ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40' : ($isOverdue ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40' : 'hover:bg-gray-50 dark:hover:bg-slate-800/60');
                                     $paidAmount = (float) ($rental->paid_amount ?? 0);
                                     $totalPrice = (float) $rental->total_price;
                                     $balanceAmount = max(0, $totalPrice - $paidAmount);
@@ -185,7 +192,7 @@
                                         default => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
                                     };
                                 @endphp
-                                <tr class="{{ $rowClass }} block p-4 transition-colors duration-200 sm:p-5 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-x-6 md:gap-y-3 xl:table-row xl:p-0">
+                                <tr id="rental-{{ $rental->id }}" class="{{ $rowClass }} block scroll-mt-28 p-4 transition-colors duration-200 sm:p-5 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-x-6 md:gap-y-3 xl:table-row xl:p-0">
                                     <!-- Item Name -->
                                     <td class="block py-2 md:col-span-2 xl:table-cell xl:px-6 xl:py-4">
                                         <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Item</p>
@@ -249,12 +256,23 @@
                                                     </svg>
                                                     Pending
                                                 </span>
+                                            @elseif($rental->status === 'cancelled')
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
+                                                    Cancelled
+                                                </span>
                                             @elseif($isOnProcess)
                                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                                                     On Process
                                                 </span>
                                             @else
-                                                @if($isOverdue)
+                                                @if($isDueToday)
+                                                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path>
+                                                        </svg>
+                                                        Due Today
+                                                    </div>
+                                                @elseif($isOverdue)
                                                     <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
                                                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
                                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
@@ -315,14 +333,25 @@
                                             @else
                                                 bg-gray-100 text-gray-800
                                             @endif">
-                                            {{ $isOnProcess ? 'On Process' : ($rental->status === 'approved' ? 'Approved Request' : ucfirst($rental->status)) }}
+                                            {{ $isOnProcess ? 'On Process' : ($rental->status === 'approved' ? 'Approved Request' : ($rental->status === 'completed' ? 'Returned' : ucfirst($rental->status))) }}
                                         </span>
                                     </td>
 
                                     <td class="block pt-3 md:col-span-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
-                                        <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto sm:px-4 xl:w-auto xl:py-2">
-                                            View Details
-                                        </a>
+                                        <div class="grid gap-2 sm:inline-grid sm:grid-cols-2 xl:grid-cols-1">
+                                            <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                View Details
+                                            </a>
+                                            @if ($rental->status === 'completed')
+                                                <button type="button" wire:click="deleteReturnedRental({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center rounded-lg border border-rose-200 px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-900/30 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                    Delete
+                                                </button>
+                                            @else
+                                                <a href="{{ route('renter.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-lg border border-blue-200 px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                    Send a message
+                                                </a>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

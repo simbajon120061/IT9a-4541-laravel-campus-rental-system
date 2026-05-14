@@ -198,7 +198,7 @@ class RentInventoryManagementTest extends TestCase
             ->assertSee('Linear Algebra Book');
     }
 
-    public function test_owner_can_view_payment_link_and_delete_rental_from_inventory(): void
+    public function test_on_process_actions_only_show_view_request_and_mark_as_rented(): void
     {
         $owner = User::factory()->create();
         $borrower = User::factory()->create();
@@ -223,7 +223,7 @@ class RentInventoryManagementTest extends TestCase
         $rental = Rental::query()->create([
             'item_id' => $item->id,
             'renter_id' => $borrower->id,
-            'start_date' => now()->addDay(),
+            'start_date' => now()->subDay(),
             'end_date' => now()->addDays(3),
             'total_price' => 100,
             'paid_amount' => 40,
@@ -234,17 +234,21 @@ class RentInventoryManagementTest extends TestCase
         $this->actingAs($owner);
 
         Livewire::test(RentInventoryManagement::class)
-            ->assertSee('View Payment')
-            ->assertSee(route('lister.payments', ['filter' => Rental::PAYMENT_STATUS_PARTIAL]).'#payment-'.$rental->id, false)
-            ->call('confirmDeleteRental', $rental->id)
-            ->assertSet('showDeleteModal', true)
-            ->assertSee('Confirm Delete')
-            ->assertSee('Linear Algebra Book')
-            ->call('deleteRental')
-            ->assertSet('showDeleteModal', false)
-            ->assertSee('Rental record deleted successfully.');
+            ->assertSee('On Process')
+            ->assertSee('View Request')
+            ->assertSee('Mark as Rented')
+            ->assertSee(route('rental-requests.show', $rental), false)
+            ->assertDontSee(route('lister.messages', ['rental' => $rental->id]), false)
+            ->assertDontSee('Message')
+            ->assertDontSee('Delete')
+            ->call('markAsRented', $rental->id)
+            ->assertSee('Rental status updated to Rented.');
 
-        $this->assertSoftDeleted('rentals', ['id' => $rental->id]);
+        $rental->refresh();
+        $item->refresh();
+
+        $this->assertSame(Rental::STATUS_ACTIVE, $rental->status);
+        $this->assertSame('rented', $item->status);
     }
 
     public function test_owner_can_mark_approved_rental_as_rented(): void
@@ -283,6 +287,7 @@ class RentInventoryManagementTest extends TestCase
         $this->actingAs($owner);
 
         Livewire::test(RentInventoryManagement::class)
+            ->assertSee('Mark as Rented')
             ->call('markAsRented', $rental->id)
             ->assertSee('Rental status updated to Rented.');
 
@@ -333,11 +338,13 @@ class RentInventoryManagementTest extends TestCase
             ->assertSee('On Process')
             ->assertSee('Starts '.$rental->start_date->format('M d, Y'))
             ->assertSee(route('rental-requests.show', $rental), false)
-            ->assertSee(route('lister.messages', ['rental' => $rental->id]), false)
-            ->assertSee(route('lister.payments', ['filter' => $rental->payment_status]).'#payment-'.$rental->id, false);
+            ->assertSee('Mark as Rented')
+            ->assertDontSee(route('lister.messages', ['rental' => $rental->id]), false)
+            ->assertDontSee('Message')
+            ->assertDontSee('Delete');
     }
 
-    public function test_active_rental_days_left_is_shown_with_rental_status_not_actions(): void
+    public function test_due_soon_rental_can_be_marked_as_returned(): void
     {
         $owner = User::factory()->create();
         $borrower = User::factory()->create();
@@ -376,8 +383,170 @@ class RentInventoryManagementTest extends TestCase
             ->assertSee('Due Soon')
             ->assertSee('1 day(s) left')
             ->assertSee(route('rental-requests.show', $rental), false)
+            ->assertSee('Mark as returned')
             ->assertSee(route('lister.messages', ['rental' => $rental->id]), false)
-            ->assertSee(route('lister.payments', ['filter' => Rental::PAYMENT_STATUS_FULLY_PAID]).'#payment-'.$rental->id, false);
+            ->call('markAsReturned', $rental->id)
+            ->assertSee('Rental status updated to Returned.')
+            ->assertSee('Returned')
+            ->assertSee('Delete');
+
+        $rental->refresh();
+        $item->refresh();
+
+        $this->assertSame(Rental::STATUS_COMPLETED, $rental->status);
+        $this->assertNotNull($rental->completed_at);
+        $this->assertSame('available', $item->status);
+    }
+
+    public function test_active_rental_with_zero_days_left_is_due_now_with_return_action(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'rented',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->subMinute(),
+            'total_price' => 100,
+            'paid_amount' => 100,
+            'payment_status' => Rental::PAYMENT_STATUS_FULLY_PAID,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('Due Now')
+            ->assertSee('0 day(s) left')
+            ->assertSee('bg-rose-100', false)
+            ->assertSee(route('rental-requests.show', $rental), false)
+            ->assertSee(route('lister.messages', ['rental' => $rental->id]), false)
+            ->assertSee('Mark as returned')
+            ->assertDontSee('>Active Loan</span>', false)
+            ->call('markAsReturned', $rental->id)
+            ->assertSee('Rental status updated to Returned.')
+            ->assertSee('Returned')
+            ->assertSee('Delete');
+
+        $rental->refresh();
+        $item->refresh();
+
+        $this->assertSame(Rental::STATUS_COMPLETED, $rental->status);
+        $this->assertSame('available', $item->status);
+    }
+
+    public function test_overdue_rental_can_be_marked_as_returned(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'rented',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->subDays(4),
+            'end_date' => now()->subDay(),
+            'total_price' => 100,
+            'paid_amount' => 100,
+            'payment_status' => Rental::PAYMENT_STATUS_FULLY_PAID,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('Overdue')
+            ->assertSee('Mark as returned')
+            ->call('markAsReturned', $rental->id)
+            ->assertSee('Returned')
+            ->assertSee('Delete')
+            ->assertDontSee('Mark as returned');
+
+        $rental->refresh();
+        $item->refresh();
+
+        $this->assertSame(Rental::STATUS_COMPLETED, $rental->status);
+        $this->assertSame('available', $item->status);
+    }
+
+    public function test_cancelled_rental_shows_delete_action_in_inventory(): void
+    {
+        $owner = User::factory()->create();
+        $borrower = User::factory()->create();
+        $category = Category::query()->firstOrCreate([
+            'slug' => 'books',
+        ], [
+            'name' => 'Books',
+            'icon' => 'book',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Linear Algebra Book',
+            'description' => 'Hardbound copy',
+            'price' => 50,
+            'status' => 'available',
+            'category' => 'books',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $borrower->id,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->subDay(),
+            'total_price' => 100,
+            'paid_amount' => 0,
+            'payment_status' => Rental::PAYMENT_STATUS_OUTSTANDING,
+            'status' => Rental::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(RentInventoryManagement::class)
+            ->assertSee('Cancelled')
+            ->assertSee(route('rental-requests.show', $rental), false)
+            ->assertSee('Delete')
+            ->assertDontSee('Mark as returned')
+            ->call('confirmDeleteRental', $rental->id)
+            ->assertSet('showDeleteModal', true)
+            ->assertSee('Confirm Delete');
     }
 
     public function test_inventory_can_open_directly_to_approved_filter(): void
@@ -524,6 +693,7 @@ class RentInventoryManagementTest extends TestCase
             ->assertSee('Due Soon Alert')
             ->assertSee(route('lister.inventory', ['filter' => 'due_soon']).'#rental-'.$rental->id, false)
             ->assertSee('id="rental-'.$rental->id.'"', false)
+            ->assertDontSee('1 active loan(s) are nearing return date.')
             ->assertDontSee('approved request(s) are waiting for payment confirmation.');
     }
 

@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\Rental;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -70,13 +71,123 @@ class ListerPaymentsTest extends TestCase
             ->assertSet('filterStatus', Rental::PAYMENT_STATUS_OUTSTANDING);
     }
 
+    public function test_owner_filters_payments_by_search_status_and_due_date(): void
+    {
+        [$owner, , $rental] = $this->createPaymentScenario(
+            itemName: 'Black Open-Front Blazer',
+            paidAmount: 40,
+            endDate: now()->addDays(3),
+        );
+        $this->createPaymentScenario(
+            owner: $owner,
+            itemName: 'Graphing Calculator',
+            renterName: 'Maria Santos',
+            paidAmount: 150,
+            endDate: now()->addDays(10),
+        );
+
+        Livewire::actingAs($owner)
+            ->test(ListerPayments::class)
+            ->assertSee('Remaining Balance')
+            ->assertSee('Due Soon')
+            ->assertSee('&#8369;110.00', false)
+            ->set('search', 'blazer')
+            ->assertSee('Black Open-Front Blazer')
+            ->assertDontSee('Graphing Calculator')
+            ->call('setFilter', Rental::PAYMENT_STATUS_PARTIAL)
+            ->assertSee('Black Open-Front Blazer')
+            ->call('setFilter', Rental::PAYMENT_STATUS_FULLY_PAID)
+            ->assertDontSee('Black Open-Front Blazer')
+            ->call('setFilter', 'all')
+            ->set('dueDate', $rental->end_date->toDateString())
+            ->assertSee('Black Open-Front Blazer')
+            ->assertDontSee('Graphing Calculator');
+    }
+
+    public function test_due_filters_detect_due_today_and_overdue_payments(): void
+    {
+        [$owner] = $this->createPaymentScenario(
+            itemName: 'Due Today Item',
+            endDate: now(),
+        );
+        $this->createPaymentScenario(
+            owner: $owner,
+            itemName: 'Overdue Item',
+            endDate: now()->subDays(2),
+        );
+        $this->createPaymentScenario(
+            owner: $owner,
+            itemName: 'Future Item',
+            endDate: now()->addDays(10),
+        );
+
+        Livewire::actingAs($owner)
+            ->test(ListerPayments::class)
+            ->assertSee('Overdue Payments')
+            ->assertSee('Due Today')
+            ->assertSee('Overdue')
+            ->call('setDueFilter', 'due_today')
+            ->assertSee('Due Today Item')
+            ->assertDontSee('Overdue Item')
+            ->call('setDueFilter', 'overdue')
+            ->assertSee('Overdue Item')
+            ->assertDontSee('Due Today Item');
+    }
+
+    public function test_owner_can_send_due_and_overdue_payment_reminders(): void
+    {
+        [$owner, $renter, $upcomingRental] = $this->createPaymentScenario(endDate: now()->addDays(2));
+        [, $overdueRenter, $overdueRental] = $this->createPaymentScenario(
+            owner: $owner,
+            renterName: 'Overdue Renter',
+            itemName: 'Overdue Item',
+            endDate: now()->subDay(),
+        );
+
+        Livewire::actingAs($owner)
+            ->test(ListerPayments::class)
+            ->call('sendUpcomingDueReminder', $upcomingRental->id)
+            ->assertSee('Upcoming due reminder sent.')
+            ->call('sendOverduePaymentReminder', $overdueRental->id)
+            ->assertSee('Overdue payment reminder sent.');
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $renter->id,
+            'notifiable_type' => $renter->getMorphClass(),
+        ]);
+        $this->assertSame('upcoming_due', $renter->notifications()->first()->data['type']);
+        $this->assertSame('overdue_payment', $overdueRenter->notifications()->first()->data['type']);
+    }
+
+    public function test_recording_payment_sends_payment_confirmed_notification(): void
+    {
+        [$owner, $renter, $rental] = $this->createPaymentScenario();
+
+        Livewire::actingAs($owner)
+            ->test(ListerPayments::class)
+            ->call('openAddPaymentModal', $rental->id)
+            ->set('paymentAmount', '25')
+            ->call('savePayment');
+
+        $notification = $renter->notifications()->first();
+
+        $this->assertNotNull($notification);
+        $this->assertSame('payment_confirmed', $notification->data['type']);
+        $this->assertEquals(125.0, $notification->data['remaining_balance']);
+    }
+
     /**
      * @return array{0: User, 1: User, 2: Rental}
      */
-    private function createPaymentScenario(float $paidAmount = 0): array
-    {
-        $owner = User::factory()->create();
-        $renter = User::factory()->create(['name' => 'Janeth Simbajon']);
+    private function createPaymentScenario(
+        ?User $owner = null,
+        string $renterName = 'Janeth Simbajon',
+        string $itemName = 'Black Open-Front Blazer',
+        float $paidAmount = 0,
+        mixed $endDate = null,
+    ): array {
+        $owner ??= User::factory()->create();
+        $renter = User::factory()->create(['name' => $renterName]);
         $category = Category::query()->firstOrCreate(
             ['slug' => 'clothing-payments'],
             [
@@ -88,7 +199,7 @@ class ListerPaymentsTest extends TestCase
 
         $item = Item::query()->create([
             'user_id' => $owner->id,
-            'name' => 'Black Open-Front Blazer',
+            'name' => $itemName,
             'description' => 'Formal blazer',
             'condition' => 'Good',
             'price' => 150,
@@ -96,15 +207,19 @@ class ListerPaymentsTest extends TestCase
             'category_id' => $category->id,
         ]);
 
-        $paymentStatus = $paidAmount > 0
-            ? Rental::PAYMENT_STATUS_PARTIAL
-            : Rental::PAYMENT_STATUS_OUTSTANDING;
+        $paymentStatus = match (true) {
+            $paidAmount >= 150 => Rental::PAYMENT_STATUS_FULLY_PAID,
+            $paidAmount > 0 => Rental::PAYMENT_STATUS_PARTIAL,
+            default => Rental::PAYMENT_STATUS_OUTSTANDING,
+        };
+
+        $rentalEndDate = $endDate ? Carbon::parse($endDate) : now()->addDays(2);
 
         $rental = Rental::query()->create([
             'item_id' => $item->id,
             'renter_id' => $renter->id,
-            'start_date' => now()->addDay(),
-            'end_date' => now()->addDays(2),
+            'start_date' => $rentalEndDate->copy()->subDay(),
+            'end_date' => $rentalEndDate,
             'total_price' => 150,
             'paid_amount' => $paidAmount,
             'payment_status' => $paymentStatus,

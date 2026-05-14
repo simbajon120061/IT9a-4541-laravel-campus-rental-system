@@ -47,20 +47,12 @@
             </div>
         @endif
 
-        @if ($pendingCount > 0 || $dueSoonCount > 0)
+        @if ($pendingCount > 0)
             <div class="mb-6 grid gap-3 sm:grid-cols-2">
-                @if ($pendingCount > 0)
-                    <div class="rounded-xl border border-amber-200/80 bg-amber-50/90 p-4 text-amber-900 shadow-sm backdrop-blur-sm dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
-                        <p class="text-sm font-semibold">Pending Requests</p>
-                        <p class="mt-1 text-sm">You have <span class="font-bold">{{ $pendingCount }}</span> request(s) waiting for approval.</p>
-                    </div>
-                @endif
-                @if ($dueSoonCount > 0)
-                    <div class="rounded-xl border border-rose-200/80 bg-rose-50/90 p-4 text-rose-900 shadow-sm backdrop-blur-sm dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-200">
-                        <p class="text-sm font-semibold">Due Soon Alert</p>
-                        <p class="mt-1 text-sm"><span class="font-bold">{{ $dueSoonCount }}</span> active loan(s) are nearing return date.</p>
-                    </div>
-                @endif
+                <div class="rounded-xl border border-amber-200/80 bg-amber-50/90 p-4 text-amber-900 shadow-sm backdrop-blur-sm dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
+                    <p class="text-sm font-semibold">Pending Requests</p>
+                    <p class="mt-1 text-sm">You have <span class="font-bold">{{ $pendingCount }}</span> request(s) waiting for approval.</p>
+                </div>
             </div>
         @endif
 
@@ -86,12 +78,35 @@
                     <button wire:click="setFilter('active')" class="inline-flex h-12 items-center rounded-lg px-3 text-sm font-semibold transition {{ $filterStatus === 'active' ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-md' : 'border border-slate-300 bg-white text-slate-700 hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300' }}">
                         Active Loan <span class="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{{ $activeCount }}</span>
                     </button>
-                    <button wire:click="setFilter('pending')" class="inline-flex h-12 items-center rounded-lg px-3 text-sm font-semibold transition {{ $filterStatus === 'pending' ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md' : 'border border-slate-300 bg-white text-slate-700 hover:border-amber-400 hover:text-amber-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300' }}">
-                        Pending Request <span class="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{{ $pendingCount }}</span>
-                    </button>
-                    <button wire:click="setFilter('approved')" class="inline-flex h-12 items-center rounded-lg px-3 text-sm font-semibold transition {{ $filterStatus === 'approved' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'border border-slate-300 bg-white text-slate-700 hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300' }}">
-                        Approved Request <span class="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{{ $approvedCount }}</span>
-                    </button>
+                    <div class="relative">
+                        <select
+                            wire:change="setFilter($event.target.value)"
+                            class="h-12 appearance-none rounded-lg border px-3 pr-8 text-sm font-semibold transition
+                                {{ in_array($filterStatus, ['pending', 'approved', 'cancelled', 'rejected'])
+                                    ? 'border-indigo-400 bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                                    : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300' }}"
+                        >
+                            <option value="all" {{ $filterStatus === 'all' ? 'selected' : '' }} class="bg-white text-slate-700">
+                                Filter by Request
+                            </option>
+                            <option value="pending" {{ $filterStatus === 'pending' ? 'selected' : '' }} class="bg-white text-slate-700">
+                                Pending Request ({{ $pendingCount }})
+                            </option>
+                            <option value="approved" {{ $filterStatus === 'approved' ? 'selected' : '' }} class="bg-white text-slate-700">
+                                Approved Request ({{ $approvedCount }})
+                            </option>
+                            <option value="cancelled" {{ $filterStatus === 'cancelled' ? 'selected' : '' }} class="bg-white text-slate-700">
+                                Cancelled Request ({{ $cancelledCount ?? 0 }})
+                            </option>
+                            <option value="rejected" {{ $filterStatus === 'rejected' ? 'selected' : '' }} class="bg-white text-slate-700">
+                                Rejected Request ({{ $rejectedCount ?? 0 }})
+                            </option>
+                        </select>
+                        {{-- chevron icon --}}
+                        <svg class="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
                 </div>
             </div>
         </div>
@@ -132,7 +147,10 @@
                                         ? (int) ceil($secondsLeft / 86400)
                                         : (int) floor($secondsLeft / 86400);
                                     $isOnProcess = $rental->status === 'approved' || ($rental->status === 'active' && $rental->start_date->isFuture());
+                                    $dueNow = $rental->status === 'active' && $rental->end_date->isPast() && $rental->end_date->isToday();
+                                    $overdue = $rental->status === 'active' && $rental->end_date->isPast() && ! $rental->end_date->isToday();
                                     $dueSoon = $rental->status === 'active' && now()->between($rental->start_date, $rental->end_date) && $daysLeft <= 7;
+                                    $canMarkAsReturned = $dueNow || $dueSoon || $overdue;
                                 @endphp
                                 <tr id="rental-{{ $rental->id }}" class="block scroll-mt-28 p-4 text-sm text-slate-700 dark:text-slate-300 lg:table-row lg:p-0">
                                     <td class="block py-2 lg:table-cell lg:px-5 lg:py-4">
@@ -199,11 +217,25 @@
                                                 <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">On Process</span>
                                                 <p class="text-xs font-semibold text-blue-600 dark:text-blue-300">Starts {{ $rental->start_date->format('M d, Y') }}</p>
                                             </div>
+                                        @elseif ($dueNow)
+                                            <div class="space-y-2">
+                                                <span class="inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">Due Now</span>
+                                                <p class="text-xs font-semibold text-rose-700 dark:text-rose-300">0 day(s) left</p>
+                                            </div>
+                                        @elseif ($overdue)
+                                            <div class="space-y-2">
+                                                <span class="inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">Overdue</span>
+                                                <p class="text-xs font-semibold text-rose-700 dark:text-rose-300">{{ abs($daysLeft) }} day(s) overdue</p>
+                                            </div>
                                         @elseif ($dueSoon)
                                             <div class="space-y-2">
                                                 <span class="inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">Due Soon</span>
                                                 <p class="text-xs font-semibold text-rose-700 dark:text-rose-300">{{ max(0, $daysLeft) }} day(s) left</p>
                                             </div>
+                                        @elseif ($rental->status === 'completed')
+                                            <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Returned</span>
+                                        @elseif ($rental->status === 'cancelled')
+                                            <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Cancelled</span>
                                         @else
                                             <div class="space-y-2">
                                                 <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">Active Loan</span>
@@ -218,12 +250,26 @@
                                             <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                                                 View Request
                                             </a>
-                                            <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:border-violet-900/60 dark:text-violet-200 dark:hover:bg-violet-900/30">
-                                                Message
-                                            </a>
-                                            <button type="button" wire:click="confirmDeleteRental({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-900/30">
-                                                Delete
-                                            </button>
+                                            @if ($isOnProcess)
+                                                <button type="button" wire:click="markAsRented({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                                                    Mark as Rented
+                                                </button>
+                                            @elseif ($canMarkAsReturned)
+                                                <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:border-violet-900/60 dark:text-violet-200 dark:hover:bg-violet-900/30">
+                                                    Send a message
+                                                </a>
+                                                <button type="button" wire:click="markAsReturned({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                                                    Mark as returned
+                                                </button>
+                                            @elseif (in_array($rental->status, ['completed', 'cancelled'], true))
+                                                <button type="button" wire:click="confirmDeleteRental({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-900/30">
+                                                    Delete
+                                                </button>
+                                            @else
+                                                <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:border-violet-900/60 dark:text-violet-200 dark:hover:bg-violet-900/30">
+                                                    Send a message
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

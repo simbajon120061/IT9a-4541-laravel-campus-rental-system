@@ -33,7 +33,7 @@ class RentalRequestDecisionNotification extends Notification
             'item_name' => $this->itemName,
             'encrypted_rental_id' => Crypt::encryptString((string) $this->rentalId),
             'decision' => $this->decision,
-            'url' => route('my-rentals'),
+            'url' => route('renter.my-rentals').'#rental-'.$this->rentalId,
         ];
     }
 }

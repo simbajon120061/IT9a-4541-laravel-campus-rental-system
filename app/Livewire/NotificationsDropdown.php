@@ -23,21 +23,24 @@ class NotificationsDropdown extends Component
         $notificationData = $notification->data;
         $notification->delete();
         $notificationData = $this->decodeNotificationData($notificationData);
-
-        $url = $notificationData['url'] ?? null;
-
-        if ($url) {
-            return redirect()->to($url);
-        }
+        $notificationData['notification_class'] = $notification->type;
 
         $rentalId = $notificationData['rental_id'] ?? $this->resolveRentalIdFromNotificationData($notificationData);
 
         if ($rentalId) {
             if ($this->currentUserOwnsRentalRequest($rentalId)) {
-                return redirect()->route('rental-requests.show', $rentalId);
+                return redirect()->to($this->ownerRentalNotificationUrl((int) $rentalId, $notificationData));
             }
 
-            return redirect()->route('my-rentals');
+            if ($this->currentUserRentedRentalRequest((int) $rentalId)) {
+                return redirect()->to($this->renterRentalNotificationUrl((int) $rentalId, $notificationData));
+            }
+        }
+
+        $url = $notificationData['url'] ?? null;
+
+        if ($url) {
+            return redirect()->to($url);
         }
 
         if (! $url && isset($notificationData['item_id'])) {
@@ -115,6 +118,51 @@ class NotificationsDropdown extends Component
             ->whereKey($rentalId)
             ->whereHas('item', fn ($itemQuery) => $itemQuery->where('user_id', Auth::id()))
             ->exists();
+    }
+
+    private function currentUserRentedRentalRequest(int $rentalId): bool
+    {
+        return Rental::query()
+            ->whereKey($rentalId)
+            ->where('renter_id', Auth::id())
+            ->exists();
+    }
+
+    /**
+     * @param  array<string, mixed>  $notificationData
+     */
+    private function ownerRentalNotificationUrl(int $rentalId, array $notificationData): string
+    {
+        if ($this->isMessageNotification($notificationData)) {
+            return route('lister.messages', ['rental' => $rentalId]);
+        }
+
+        return route('rental-requests.show', [
+            'rental' => $rentalId,
+            'portal' => 'lister',
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $notificationData
+     */
+    private function renterRentalNotificationUrl(int $rentalId, array $notificationData): string
+    {
+        if ($this->isMessageNotification($notificationData)) {
+            return route('renter.messages', ['rental' => $rentalId]);
+        }
+
+        return route('renter.my-rentals').'#rental-'.$rentalId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $notificationData
+     */
+    private function isMessageNotification(array $notificationData): bool
+    {
+        return ($notificationData['type'] ?? null) === 'message'
+            || ($notificationData['title'] ?? null) === 'New message'
+            || str_contains((string) ($notificationData['notification_class'] ?? ''), 'RentalMessageSentNotification');
     }
 
     public function markAsRead(string $notificationId): void
