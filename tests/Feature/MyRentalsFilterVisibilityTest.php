@@ -56,6 +56,18 @@ class MyRentalsFilterVisibilityTest extends TestCase
             ->assertSee('No rentals for this filter');
     }
 
+    public function test_my_rentals_sets_renter_portal_context(): void
+    {
+        $renter = User::factory()->create();
+
+        $this
+            ->actingAs($renter)
+            ->withSession(['active_portal' => 'lister'])
+            ->get(route('renter.my-rentals'))
+            ->assertOk()
+            ->assertSessionHas('active_portal', 'renter');
+    }
+
     public function test_days_left_displays_whole_days_for_partial_day_difference(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-04-25 08:00:00'));
@@ -462,5 +474,69 @@ class MyRentalsFilterVisibilityTest extends TestCase
             ->assertDontSee('Returned Blazer');
 
         $this->assertSoftDeleted('rentals', ['id' => $rental->id]);
+    }
+
+    public function test_payment_confirmation_query_opens_receipt_modal(): void
+    {
+        [$renter, $rental] = $this->createPaidRentalForReceipt();
+
+        $this->actingAs($renter);
+
+        Livewire::withQueryParams(['receipt' => $rental->id])
+            ->test(MyRentals::class)
+            ->assertSet('receiptRentalId', $rental->id)
+            ->assertSee('Digital Receipt')
+            ->assertSee('Receipt #CR-'.$rental->id)
+            ->assertSee('Save/Download')
+            ->call('closeReceiptModal')
+            ->assertSet('receiptRentalId', null);
+    }
+
+    public function test_renter_can_download_payment_receipt(): void
+    {
+        [$renter, $rental] = $this->createPaidRentalForReceipt();
+
+        $this->actingAs($renter);
+
+        Livewire::withQueryParams(['receipt' => $rental->id])
+            ->test(MyRentals::class)
+            ->call('downloadReceipt')
+            ->assertFileDownloaded('campusrent-payment-receipt-'.$rental->id.'.txt');
+    }
+
+    /**
+     * @return array{0: User, 1: Rental}
+     */
+    private function createPaidRentalForReceipt(): array
+    {
+        $renter = User::factory()->create();
+        $owner = User::factory()->create(['name' => 'Carine Magcantara']);
+
+        $category = Category::query()->firstOrCreate(
+            ['slug' => 'receipt-rentals'],
+            ['name' => 'Receipt Rentals', 'icon' => 'box', 'is_active' => true]
+        );
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Black Open-Front Blazer',
+            'description' => 'Formal wear',
+            'price' => 150,
+            'status' => 'rented',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->subDay(),
+            'end_date' => now()->addDay(),
+            'total_price' => 150,
+            'paid_amount' => 100,
+            'payment_status' => Rental::PAYMENT_STATUS_PARTIAL,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        return [$renter, $rental];
     }
 }

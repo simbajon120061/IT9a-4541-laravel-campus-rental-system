@@ -46,7 +46,9 @@ class RentalPaymentStatusNotification extends Notification
             'item_name' => $this->itemName,
             'remaining_balance' => $this->remainingBalance,
             'due_date' => $this->dueDate,
-            'url' => route('renter.my-rentals').'#rental-'.$this->rentalId,
+            'url' => $this->type === 'payment_confirmed'
+                ? route('renter.my-rentals', ['receipt' => $this->rentalId]).'#rental-'.$this->rentalId
+                : route('renter.my-rentals').'#rental-'.$this->rentalId,
         ];
     }
 

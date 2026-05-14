@@ -223,6 +223,7 @@ class NotificationsDropdownTest extends TestCase
             'data' => [
                 'title' => 'Payment confirmed',
                 'message' => 'Your payment was confirmed.',
+                'type' => 'payment_confirmed',
                 'rental_id' => $rental->id,
                 'url' => route('rental-requests.show', $rental),
             ],
@@ -232,8 +233,9 @@ class NotificationsDropdownTest extends TestCase
 
         Livewire::test(NotificationsDropdown::class)
             ->call('openNotification', $notification->id)
-            ->assertRedirect(route('renter.my-rentals').'#rental-'.$rental->id);
+            ->assertRedirect(route('renter.my-rentals', ['receipt' => $rental->id]).'#rental-'.$rental->id);
 
+        $this->assertSame('renter', session('active_portal'));
         $this->assertNotSame($owner->id, $renter->id);
     }
 
@@ -257,6 +259,8 @@ class NotificationsDropdownTest extends TestCase
         Livewire::test(NotificationsDropdown::class)
             ->call('openNotification', $notification->id)
             ->assertRedirect(route('renter.messages', ['rental' => $rental->id]));
+
+        $this->assertSame('renter', session('active_portal'));
     }
 
     public function test_lister_message_notification_opens_lister_conversation(): void
@@ -279,6 +283,8 @@ class NotificationsDropdownTest extends TestCase
         Livewire::test(NotificationsDropdown::class)
             ->call('openNotification', $notification->id)
             ->assertRedirect(route('lister.messages', ['rental' => $rental->id]));
+
+        $this->assertSame('lister', session('active_portal'));
     }
 
     /**

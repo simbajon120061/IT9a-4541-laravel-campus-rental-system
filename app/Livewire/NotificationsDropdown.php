@@ -133,6 +133,8 @@ class NotificationsDropdown extends Component
      */
     private function ownerRentalNotificationUrl(int $rentalId, array $notificationData): string
     {
+        session()->put('active_portal', 'lister');
+
         if ($this->isMessageNotification($notificationData)) {
             return route('lister.messages', ['rental' => $rentalId]);
         }
@@ -148,8 +150,14 @@ class NotificationsDropdown extends Component
      */
     private function renterRentalNotificationUrl(int $rentalId, array $notificationData): string
     {
+        session()->put('active_portal', 'renter');
+
         if ($this->isMessageNotification($notificationData)) {
             return route('renter.messages', ['rental' => $rentalId]);
+        }
+
+        if (($notificationData['type'] ?? null) === 'payment_confirmed') {
+            return route('renter.my-rentals', ['receipt' => $rentalId]).'#rental-'.$rentalId;
         }
 
         return route('renter.my-rentals').'#rental-'.$rentalId;
