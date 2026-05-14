@@ -62,7 +62,7 @@ class NotificationsDropdownTest extends TestCase
 
         Livewire::test(NotificationsDropdown::class)
             ->call('openNotification', $notification->id)
-            ->assertRedirect(route('rental-requests.show', $rental));
+            ->assertRedirect(route('rental-requests.show', ['rental' => $rental, 'portal' => 'lister']));
 
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
     }
@@ -113,7 +113,7 @@ class NotificationsDropdownTest extends TestCase
 
         Livewire::test(NotificationsDropdown::class)
             ->call('openNotification', $notification->id)
-            ->assertRedirect(route('rental-requests.show', $rental));
+            ->assertRedirect(route('rental-requests.show', ['rental' => $rental, 'portal' => 'lister']));
     }
 
     public function test_open_notification_with_encrypted_payload_resolves_owner_rental_request_view(): void
@@ -163,7 +163,7 @@ class NotificationsDropdownTest extends TestCase
 
         Livewire::test(NotificationsDropdown::class)
             ->call('openNotification', $notification->id)
-            ->assertRedirect(route('rental-requests.show', $rental));
+            ->assertRedirect(route('rental-requests.show', ['rental' => $rental, 'portal' => 'lister']));
     }
 
     public function test_open_notification_uses_explicit_url_for_renter_updates(): void
@@ -213,6 +213,7 @@ class NotificationsDropdownTest extends TestCase
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
     }
 
+<<<<<<< HEAD
     public function test_admin_review_notification_redirects_to_reports_and_complaints(): void
     {
         $admin = User::factory()->admin()->create();
@@ -238,5 +239,116 @@ class NotificationsDropdownTest extends TestCase
             ->assertRedirect(route('admin.reports', [], false));
 
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
+=======
+    public function test_renter_rental_update_redirects_to_my_rentals_row_even_with_stale_url(): void
+    {
+        [$owner, $renter, $rental] = $this->createRentalForNotifications();
+
+        $notification = $renter->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'App\\Notifications\\RentalPaymentStatusNotification',
+            'data' => [
+                'title' => 'Payment confirmed',
+                'message' => 'Your payment was confirmed.',
+                'type' => 'payment_confirmed',
+                'rental_id' => $rental->id,
+                'url' => route('rental-requests.show', $rental),
+            ],
+        ]);
+
+        $this->actingAs($renter);
+
+        Livewire::test(NotificationsDropdown::class)
+            ->call('openNotification', $notification->id)
+            ->assertRedirect(route('renter.my-rentals', ['receipt' => $rental->id]).'#rental-'.$rental->id);
+
+        $this->assertSame('renter', session('active_portal'));
+        $this->assertNotSame($owner->id, $renter->id);
+    }
+
+    public function test_renter_message_notification_opens_renter_conversation(): void
+    {
+        [, $renter, $rental] = $this->createRentalForNotifications();
+
+        $notification = $renter->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'App\\Notifications\\RentalMessageSentNotification',
+            'data' => [
+                'title' => 'New message',
+                'message' => 'Owner: Please bring an ID',
+                'rental_id' => $rental->id,
+                'url' => route('rental-requests.show', $rental).'#messages',
+            ],
+        ]);
+
+        $this->actingAs($renter);
+
+        Livewire::test(NotificationsDropdown::class)
+            ->call('openNotification', $notification->id)
+            ->assertRedirect(route('renter.messages', ['rental' => $rental->id]));
+
+        $this->assertSame('renter', session('active_portal'));
+    }
+
+    public function test_lister_message_notification_opens_lister_conversation(): void
+    {
+        [$owner, , $rental] = $this->createRentalForNotifications();
+
+        $notification = $owner->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'App\\Notifications\\RentalMessageSentNotification',
+            'data' => [
+                'title' => 'New message',
+                'message' => 'Renter: Thank you',
+                'rental_id' => $rental->id,
+                'url' => route('rental-requests.show', $rental).'#messages',
+            ],
+        ]);
+
+        $this->actingAs($owner);
+
+        Livewire::test(NotificationsDropdown::class)
+            ->call('openNotification', $notification->id)
+            ->assertRedirect(route('lister.messages', ['rental' => $rental->id]));
+
+        $this->assertSame('lister', session('active_portal'));
+    }
+
+    /**
+     * @return array{0: User, 1: User, 2: Rental}
+     */
+    private function createRentalForNotifications(): array
+    {
+        $owner = User::factory()->create();
+        $renter = User::factory()->create();
+        $category = Category::query()->create([
+            'name' => 'Electronics',
+            'slug' => 'electronics-'.Str::random(8),
+            'icon' => 'chip',
+            'is_active' => true,
+        ]);
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Portable Speaker',
+            'description' => 'Bluetooth speaker',
+            'price' => 50,
+            'status' => 'available',
+            'category_id' => $category->id,
+        ]);
+
+        $rental = Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(2),
+            'total_price' => 100,
+            'paid_amount' => 0,
+            'payment_status' => 'outstanding',
+            'status' => 'pending',
+        ]);
+
+        return [$owner, $renter, $rental];
+>>>>>>> 52b7941cd76779bdee095a61ffbd968ea489ec59
     }
 }

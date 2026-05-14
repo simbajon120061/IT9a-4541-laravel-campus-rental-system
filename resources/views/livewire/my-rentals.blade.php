@@ -55,6 +55,89 @@
             </div>
         @endif
 
+        @if (session()->has('message'))
+            <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-200">
+                {{ session('message') }}
+            </div>
+        @endif
+
+        @if ($receiptRental)
+            @php
+                $receiptPaidAmount = (float) ($receiptRental->paid_amount ?? 0);
+                $receiptTotalPrice = (float) $receiptRental->total_price;
+                $receiptBalance = max(0, $receiptTotalPrice - $receiptPaidAmount);
+                $receiptStatusLabel = $receiptRental->payment_status === \App\Models\Rental::PAYMENT_STATUS_FULLY_PAID ? 'Fully Paid' : 'Partial';
+            @endphp
+
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title">
+                <div class="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                    <div class="border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-950">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300">Payment Confirmation</p>
+                                <h2 id="receipt-modal-title" class="mt-1 text-2xl font-extrabold text-slate-950 dark:text-white">Digital Receipt</h2>
+                            </div>
+                            <button type="button" wire:click="closeReceiptModal" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Close receipt">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="px-5 py-5">
+                        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-200">
+                            <p class="text-sm font-bold">{{ $receiptStatusLabel }}</p>
+                            <p class="mt-1 text-xs">Receipt #CR-{{ $receiptRental->id }}</p>
+                        </div>
+
+                        <dl class="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+                            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                                <dt class="text-xs font-bold uppercase text-slate-400">Item</dt>
+                                <dd class="mt-1 font-semibold text-slate-950 dark:text-white">{{ $receiptRental->item->name }}</dd>
+                            </div>
+                            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                                <dt class="text-xs font-bold uppercase text-slate-400">Lister</dt>
+                                <dd class="mt-1 font-semibold text-slate-950 dark:text-white">{{ $receiptRental->item->user->name }}</dd>
+                            </div>
+                            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                                <dt class="text-xs font-bold uppercase text-slate-400">Rental Period</dt>
+                                <dd class="mt-1 font-semibold text-slate-950 dark:text-white">{{ $receiptRental->start_date->format('M d, Y') }} - {{ $receiptRental->end_date->format('M d, Y') }}</dd>
+                            </div>
+                            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                                <dt class="text-xs font-bold uppercase text-slate-400">Confirmed</dt>
+                                <dd class="mt-1 font-semibold text-slate-950 dark:text-white">{{ $receiptRental->updated_at->format('M d, Y g:i A') }}</dd>
+                            </div>
+                        </dl>
+
+                        <div class="mt-5 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm dark:border-slate-800">
+                                <span class="font-semibold text-slate-600 dark:text-slate-300">Total</span>
+                                <span class="font-bold text-slate-950 dark:text-white">&#8369;{{ number_format($receiptTotalPrice, 2) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm dark:border-slate-800">
+                                <span class="font-semibold text-slate-600 dark:text-slate-300">Paid</span>
+                                <span class="font-bold text-emerald-700 dark:text-emerald-300">&#8369;{{ number_format($receiptPaidAmount, 2) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between px-4 py-3 text-sm">
+                                <span class="font-semibold text-slate-600 dark:text-slate-300">Remaining Balance</span>
+                                <span class="font-bold text-slate-950 dark:text-white">&#8369;{{ number_format($receiptBalance, 2) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 grid grid-cols-2 gap-3">
+                            <button type="button" wire:click="downloadReceipt" class="inline-flex h-11 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700">
+                                Save/Download
+                            </button>
+                            <button type="button" wire:click="closeReceiptModal" class="inline-flex h-11 items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                                Exit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 sm:rounded-2xl sm:p-5">
             <p class="mb-3 text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">Search Item or Owner</p>
 
@@ -168,9 +251,10 @@
                                         ? (int) ceil($secondsLeft / 86400)
                                         : (int) floor($secondsLeft / 86400);
                                     $isOnProcess = $rental->status === 'approved' || ($rental->status === 'active' && $rental->start_date->isFuture());
-                                    $isDueSoon = $rental->status === 'active' && ! $isOnProcess && $daysLeft >= 0 && $daysLeft <= 7;
-                                    $isOverdue = $daysLeft < 0;
-                                    $rowClass = $isDueSoon ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40' : ($isOverdue ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40' : 'hover:bg-gray-50 dark:hover:bg-slate-800/60');
+                                    $isDueToday = $rental->status === 'active' && ! $isOnProcess && $rental->end_date->isToday();
+                                    $isDueSoon = $rental->status === 'active' && ! $isOnProcess && ! $isDueToday && $daysLeft >= 0 && $daysLeft <= 7;
+                                    $isOverdue = $rental->status === 'active' && ! $isOnProcess && ! $isDueToday && $daysLeft < 0;
+                                    $rowClass = ($isDueToday || $isDueSoon) ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40' : ($isOverdue ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40' : 'hover:bg-gray-50 dark:hover:bg-slate-800/60');
                                     $paidAmount = (float) ($rental->paid_amount ?? 0);
                                     $totalPrice = (float) $rental->total_price;
                                     $balanceAmount = max(0, $totalPrice - $paidAmount);
@@ -185,7 +269,7 @@
                                         default => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
                                     };
                                 @endphp
-                                <tr class="{{ $rowClass }} block p-4 transition-colors duration-200 sm:p-5 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-x-6 md:gap-y-3 xl:table-row xl:p-0">
+                                <tr id="rental-{{ $rental->id }}" class="{{ $rowClass }} block scroll-mt-28 p-4 transition-colors duration-200 sm:p-5 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-x-6 md:gap-y-3 xl:table-row xl:p-0">
                                     <!-- Item Name -->
                                     <td class="block py-2 md:col-span-2 xl:table-cell xl:px-6 xl:py-4">
                                         <p class="mb-2 text-[11px] font-semibold uppercase text-slate-400 xl:hidden">Item</p>
@@ -249,12 +333,23 @@
                                                     </svg>
                                                     Pending
                                                 </span>
+                                            @elseif($rental->status === 'cancelled')
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
+                                                    Cancelled
+                                                </span>
                                             @elseif($isOnProcess)
                                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                                                     On Process
                                                 </span>
                                             @else
-                                                @if($isOverdue)
+                                                @if($isDueToday)
+                                                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path>
+                                                        </svg>
+                                                        Due Today
+                                                    </div>
+                                                @elseif($isOverdue)
                                                     <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
                                                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
                                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
@@ -315,14 +410,25 @@
                                             @else
                                                 bg-gray-100 text-gray-800
                                             @endif">
-                                            {{ $isOnProcess ? 'On Process' : ($rental->status === 'approved' ? 'Approved Request' : ucfirst($rental->status)) }}
+                                            {{ $isOnProcess ? 'On Process' : ($rental->status === 'approved' ? 'Approved Request' : ($rental->status === 'completed' ? 'Returned' : ucfirst($rental->status))) }}
                                         </span>
                                     </td>
 
                                     <td class="block pt-3 md:col-span-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
-                                        <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto sm:px-4 xl:w-auto xl:py-2">
-                                            View Details
-                                        </a>
+                                        <div class="grid gap-2 sm:inline-grid sm:grid-cols-2 xl:grid-cols-1">
+                                            <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                View Details
+                                            </a>
+                                            @if ($rental->status === 'completed')
+                                                <button type="button" wire:click="deleteReturnedRental({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center rounded-lg border border-rose-200 px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-900/30 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                    Delete
+                                                </button>
+                                            @else
+                                                <a href="{{ route('renter.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-lg border border-blue-200 px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                    Send a message
+                                                </a>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

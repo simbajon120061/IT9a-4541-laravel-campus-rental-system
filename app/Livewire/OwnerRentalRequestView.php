@@ -7,6 +7,7 @@ use App\Models\Report;
 use App\Models\User;
 use App\Notifications\AdminReviewQueueNotification;
 use App\Notifications\RentalMessageSentNotification;
+use App\Notifications\RentalPaymentStatusNotification;
 use App\Notifications\RentalRequestDecisionNotification;
 use App\Notifications\ReportSubmittedNotification;
 use Carbon\Carbon;
@@ -49,6 +50,12 @@ class OwnerRentalRequestView extends Component
     public string $reportNotice = '';
 
     public int $noticeToken = 0;
+
+    public bool $showPaymentModal = false;
+
+    public string $paymentAmount = '';
+
+    public string $paymentMode = 'add';
 
     public function mount(Rental $rental): void
     {
@@ -303,6 +310,69 @@ class OwnerRentalRequestView extends Component
         $this->showNotice('reportNotice', 'Report submitted. An admin will verify it.');
     }
 
+    public function openAddPaymentModal(): void
+    {
+        abort_unless(Auth::check(), 403);
+        abort_unless($this->isOwner, 403);
+        abort_unless($this->canRecordPayment(), 404);
+
+        $this->paymentMode = 'add';
+        $this->paymentAmount = '';
+        $this->showPaymentModal = true;
+        $this->resetValidation('paymentAmount');
+    }
+
+    public function fillFullPaymentAmount(): void
+    {
+        abort_unless(Auth::check(), 403);
+        abort_unless($this->isOwner, 403);
+        abort_unless($this->canRecordPayment(), 404);
+
+        $this->paymentMode = 'full';
+        $this->paymentAmount = number_format($this->remainingBalance(), 2, '.', '');
+        $this->resetValidation('paymentAmount');
+    }
+
+    public function closePaymentModal(): void
+    {
+        $this->showPaymentModal = false;
+        $this->paymentMode = 'add';
+        $this->paymentAmount = '';
+        $this->resetValidation('paymentAmount');
+    }
+
+    public function savePayment(): mixed
+    {
+        abort_unless(Auth::check(), 403);
+        abort_unless($this->isOwner, 403);
+        abort_unless($this->canRecordPayment(), 404);
+
+        $remainingBalance = $this->remainingBalance();
+
+        $this->validate([
+            'paymentAmount' => ['required', 'numeric', 'gt:0', 'max:'.$remainingBalance],
+        ], [
+            'paymentAmount.max' => 'The payment must not exceed the remaining balance.',
+        ]);
+
+        $this->rental->applyPayment((float) $this->paymentAmount);
+        $this->rental->refresh()->load(['item.user', 'renter']);
+
+        $this->rental->renter->notify(new RentalPaymentStatusNotification(
+            rentalId: $this->rental->id,
+            itemId: $this->rental->item->id,
+            itemName: $this->rental->item->name,
+            type: 'payment_confirmed',
+            message: "Your payment for {$this->rental->item->name} has been confirmed.",
+            remainingBalance: $this->remainingBalance(),
+            dueDate: $this->rental->end_date->toDateString(),
+        ));
+
+        $this->closePaymentModal();
+
+        return redirect()->to(route('lister.payments', ['filter' => $this->rental->payment_status]).'#payment-'.$this->rental->id);
+    }
+
     private function startReport(string $type): void
     {
         $this->resetValidation();
@@ -320,6 +390,18 @@ class OwnerRentalRequestView extends Component
         $this->editableEndDate = $this->rental->end_date->toDateString();
     }
 
+    private function canRecordPayment(): bool
+    {
+        return $this->rental->status !== Rental::STATUS_CANCELLED
+            && $this->rental->payment_status !== Rental::PAYMENT_STATUS_FULLY_PAID
+            && $this->remainingBalance() > 0;
+    }
+
+    private function remainingBalance(): float
+    {
+        return max(0, round((float) $this->rental->total_price - (float) ($this->rental->paid_amount ?? 0), 2));
+    }
+
     private function showNotice(string $property, string $message): void
     {
         $this->{$property} = $message;
@@ -334,11 +416,20 @@ class OwnerRentalRequestView extends Component
             : (int) floor($secondsLeft / 86400);
         $secondsRequested = $this->rental->start_date->diffInSeconds($this->rental->end_date, false);
         $daysRequested = max(1, (int) ceil($secondsRequested / 86400));
+        $isOnProcess = $this->rental->status === Rental::STATUS_APPROVED
+            || ($this->rental->status === Rental::STATUS_ACTIVE && $this->rental->start_date->isFuture());
+        $dueNow = $this->rental->status === Rental::STATUS_ACTIVE && $daysLeft <= 0;
+        $dueSoon = $this->rental->status === Rental::STATUS_ACTIVE
+            && now()->between($this->rental->start_date, $this->rental->end_date)
+            && $daysLeft <= 7;
 
         return view('livewire.owner-rental-request-view', [
             'daysRequested' => $daysRequested,
             'daysLeft' => max(0, $daysLeft),
-            'dueTomorrow' => $this->rental->status === 'active' && $daysLeft === 1,
+            'dueNow' => $dueNow,
+            'dueSoon' => $dueSoon,
+            'dueTomorrow' => $this->rental->status === Rental::STATUS_ACTIVE && $daysLeft === 1,
+            'isOnProcess' => $isOnProcess,
             'isOwner' => $this->isOwner,
             'messages' => $this->rental->messages()
                 ->with('sender')

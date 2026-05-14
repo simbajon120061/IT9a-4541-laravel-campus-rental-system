@@ -57,6 +57,80 @@
             </div>
         @endif
 
+        @if ($showPaymentModal)
+            @php
+                $remainingBalance = max(0, round((float) $rental->total_price - (float) ($rental->paid_amount ?? 0), 2));
+            @endphp
+
+            <div class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+                <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300">Record Payment</p>
+                            <h2 id="payment-modal-title" class="mt-1 text-xl font-extrabold text-slate-950 dark:text-white">Add Payment</h2>
+                        </div>
+                        <button type="button" wire:click="closePaymentModal" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Cancel payment entry">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="mt-5 rounded-lg bg-slate-50 p-4 text-sm text-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                        <p class="font-bold text-slate-950 dark:text-white">{{ $rental->item->name }}</p>
+                        <p class="mt-1">{{ $rental->renter->name }}</p>
+                        <div class="mt-3 grid grid-cols-3 gap-3 text-xs">
+                            <div>
+                                <span class="block font-semibold uppercase text-slate-400">Total</span>
+                                <span class="mt-1 block font-bold text-slate-900 dark:text-slate-100">&#8369;{{ number_format((float) $rental->total_price, 2) }}</span>
+                            </div>
+                            <div>
+                                <span class="block font-semibold uppercase text-slate-400">Paid</span>
+                                <span class="mt-1 block font-bold text-slate-900 dark:text-slate-100">&#8369;{{ number_format((float) $rental->paid_amount, 2) }}</span>
+                            </div>
+                            <div>
+                                <span class="block font-semibold uppercase text-slate-400">Balance</span>
+                                <span class="mt-1 block font-bold text-slate-900 dark:text-slate-100">&#8369;{{ number_format($remainingBalance, 2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form wire:submit.prevent="savePayment" class="mt-5 space-y-4">
+                        <div>
+                            <div class="mb-2 flex items-center justify-between gap-3">
+                                <label for="paymentAmount" class="block text-sm font-bold text-slate-700 dark:text-slate-200">Payment amount</label>
+                                <button type="button" wire:click="fillFullPaymentAmount" class="text-xs font-bold text-blue-700 transition hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200">
+                                    Pay in full
+                                </button>
+                            </div>
+                            <input
+                                id="paymentAmount"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                max="{{ $remainingBalance }}"
+                                wire:model.defer="paymentAmount"
+                                class="h-12 w-full rounded-lg border-slate-300 bg-white px-4 text-sm text-slate-950 focus:border-blue-500 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                                placeholder="Enter amount"
+                            >
+                            @error('paymentAmount')
+                                <p class="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" wire:click="closePaymentModal" class="inline-flex h-11 items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                                Cancel
+                            </button>
+                            <button type="submit" class="inline-flex h-11 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700">
+                                Save Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
+
         @if ($dueTomorrow)
             <div class="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                 <span class="font-semibold">Due soon:</span> This rental is due in {{ $daysLeft }} day.
@@ -108,10 +182,18 @@
                             <dd class="mt-2">
                                 @if ($rental->status === 'pending')
                                     <span class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Pending Request</span>
-                                @elseif ($rental->status === 'approved')
+                                @elseif ($isOnProcess)
                                     <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">On Process</span>
+                                    <p class="mt-2 text-xs font-semibold text-blue-600">Starts {{ $rental->start_date->format('M d, Y') }}</p>
+                                @elseif ($dueNow)
+                                    <span class="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Due Now</span>
+                                    <p class="mt-2 text-xs font-semibold text-rose-700">0 day(s) left</p>
+                                @elseif ($dueSoon)
+                                    <span class="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Due Soon</span>
+                                    <p class="mt-2 text-xs font-semibold text-rose-700">{{ $daysLeft }} day(s) left</p>
                                 @elseif ($rental->status === 'active')
                                     <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Active Loan</span>
+                                    <p class="mt-2 text-xs font-semibold text-slate-600">{{ $daysLeft }} day(s) left</p>
                                 @else
                                     <span class="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Rejected</span>
                                 @endif
@@ -219,9 +301,15 @@
                                 <a href="{{ route('lister.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-200 px-4 py-2 text-m font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
                                     Open Chat
                                 </a>
-                                <a href="{{ route('lister.payments', ['filter' => $rental->payment_status]) }}#payment-{{ $rental->id }}" class="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-m font-semibold text-white transition hover:bg-blue-700">
-                                    Add Payment
-                                </a>
+                                @if ($rental->payment_status === \App\Models\Rental::PAYMENT_STATUS_FULLY_PAID)
+                                    <button type="button" disabled class="inline-flex w-full cursor-not-allowed items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-m font-semibold text-white opacity-90">
+                                        Paid
+                                    </button>
+                                @elseif ($rental->status !== \App\Models\Rental::STATUS_CANCELLED)
+                                    <button type="button" wire:click="openAddPaymentModal" class="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-m font-semibold text-white transition hover:bg-blue-700">
+                                        Add Payment
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     @else (! $isOwner)

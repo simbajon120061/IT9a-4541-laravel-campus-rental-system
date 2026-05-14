@@ -166,6 +166,24 @@ class RentInventoryManagement extends Component
         session()->flash('message', 'Rental status updated to Rented.');
     }
 
+    public function markAsReturned(int $rentalId): void
+    {
+        abort_unless(Auth::check(), 403);
+
+        $rental = Rental::query()
+            ->whereHas('item', fn ($query) => $query->where('user_id', Auth::id()))
+            ->where('status', Rental::STATUS_ACTIVE)
+            ->findOrFail($rentalId);
+
+        $rental->update([
+            'status' => Rental::STATUS_COMPLETED,
+            'completed_at' => now(),
+        ]);
+        $rental->item->update(['status' => 'available']);
+
+        session()->flash('message', 'Rental status updated to Returned.');
+    }
+
     public function confirmDeleteRental(int $rentalId): void
     {
         abort_unless(Auth::check(), 403);
@@ -208,7 +226,7 @@ class RentInventoryManagement extends Component
 
         $baseQuery = Rental::query()
             ->whereHas('item', fn ($query) => $query->where('user_id', Auth::id()))
-            ->whereIn('status', [Rental::STATUS_PENDING, Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE])
+            ->whereIn('status', [Rental::STATUS_PENDING, Rental::STATUS_APPROVED, Rental::STATUS_ACTIVE, Rental::STATUS_COMPLETED, Rental::STATUS_CANCELLED])
             ->with(['item.categoryRecord', 'renter']);
 
         if ($this->search !== '') {

@@ -10,6 +10,7 @@ use App\Livewire\EditItem;
 use App\Livewire\HomePage;
 use App\Livewire\ListerDashboard;
 use App\Livewire\ListerPayments;
+use App\Livewire\ListerRentalLogs;
 use App\Livewire\ListerRentalRequests;
 use App\Livewire\MessagesIndex;
 use App\Livewire\MyListings;
@@ -72,6 +73,7 @@ Route::middleware([
     Route::get('/lister/my-listings', MyListings::class)->name('lister.my-listings');
     Route::get('/lister/inventory', RentInventoryManagement::class)->name('lister.inventory');
     Route::get('/lister/rental-requests', ListerRentalRequests::class)->name('lister.rental-requests');
+    Route::get('/lister/rental-logs', ListerRentalLogs::class)->name('lister.rental-logs');
     Route::get('/lister/payments', ListerPayments::class)->name('lister.payments');
     Route::get('/lister/messages', MessagesIndex::class)->name('lister.messages');
 

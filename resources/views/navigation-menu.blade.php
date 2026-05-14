@@ -29,7 +29,7 @@
         ['route' => 'lister.dashboard', 'label' => 'Lister Dashboard', 'active' => ['lister.dashboard'], 'icon' => 'dashboard'],
         ['route' => 'lister.my-listings', 'label' => 'My Listings', 'active' => ['lister.my-listings', 'my-listings', 'add-item', 'edit-item'], 'icon' => 'listings'],
         ['route' => 'lister.inventory', 'label' => 'Inventory', 'active' => ['lister.inventory', 'rent-inventory-management'], 'icon' => 'inventory'],
-        ['route' => 'lister.rental-requests', 'label' => 'Rental Requests', 'active' => ['lister.rental-requests', 'rental-requests.*'], 'icon' => 'requests'],
+        ['route' => 'lister.rental-requests', 'label' => 'Rental Requests', 'active' => ['lister.rental-requests', 'lister.rental-logs', 'rental-requests.*'], 'icon' => 'requests'],
         ['route' => 'lister.payments', 'label' => 'Payments', 'active' => ['lister.payments'], 'icon' => 'payments'],
         ['route' => 'lister.messages', 'label' => 'Messages', 'active' => ['lister.messages'], 'icon' => 'messages'],
     ];
