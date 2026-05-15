@@ -1,5 +1,5 @@
 <div class="bg-gradient-to-b from-gray-50 to-white py-6 sm:py-8 md:py-12 dark:from-slate-950 dark:to-slate-900">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-7">
         <!-- Header -->
         <div class="mb-6 sm:mb-8">
             <h1 class="mb-2 text-3xl font-bold text-blue-700 dark:text-slate-100 sm:text-4xl">My Rentals</h1>
@@ -240,7 +240,7 @@
                                 <th class="px-6 py-4 text-right text-sm font-semibold text-gray-700 dark:text-slate-300">Total Price</th>
                                 <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-slate-300">Payment Status</th>
                                 <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-slate-300">Status</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold text-gray-700 dark:text-slate-300">Action</th>
+                                <th class="px-3 py-4 text-center text-sm font-semibold text-gray-700 dark:text-slate-300">Action</th>
                             </tr>
                         </thead>
                         <tbody class="block divide-y divide-gray-200 dark:divide-slate-700 xl:table-row-group">
@@ -414,17 +414,22 @@
                                         </span>
                                     </td>
 
-                                    <td class="block pt-3 md:col-span-2 xl:table-cell xl:px-6 xl:py-4 xl:text-center">
-                                        <div class="grid gap-2 sm:inline-grid sm:grid-cols-2 xl:grid-cols-1">
-                                            <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                    <td class="block pt-3 md:col-span-2 xl:table-cell xl:px-3 xl:py-4 xl:text-center">
+                                        <div class="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:justify-end xl:flex-nowrap xl:justify-center">
+                                            <a href="{{ route('rental-requests.show', $rental) }}" class="inline-flex min-h-9 w-full min-w-20 items-center justify-center rounded-md bg-blue-600 px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight text-white transition hover:bg-blue-700 sm:w-auto">
                                                 View Details
                                             </a>
+                                            @if ($rental->payment_status !== \App\Models\Rental::PAYMENT_STATUS_OUTSTANDING)
+                                                <a href="{{ route('renter.my-rentals', ['receipt' => $rental->id]) }}#rental-{{ $rental->id }}" class="inline-flex min-h-9 w-full min-w-20 items-center justify-center rounded-md border border-emerald-200 px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight text-emerald-700 transition hover:bg-emerald-50 dark:border-emerald-900/60 dark:text-emerald-200 dark:hover:bg-emerald-900/30 sm:w-auto">
+                                                    View Receipt
+                                                </a>
+                                            @endif
                                             @if ($rental->status === 'completed')
-                                                <button type="button" wire:click="deleteReturnedRental({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center rounded-lg border border-rose-200 px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-900/30 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                <button type="button" wire:click="deleteReturnedRental({{ $rental->id }})" wire:loading.attr="disabled" class="inline-flex min-h-9 w-full min-w-20 items-center justify-center rounded-md border border-rose-200 px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:text-rose-200 dark:hover:bg-rose-900/30 sm:w-auto">
                                                     Delete
                                                 </button>
                                             @else
-                                                <a href="{{ route('renter.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-lg border border-blue-200 px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30 sm:w-auto sm:px-4 xl:w-full xl:py-2">
+                                                <a href="{{ route('renter.messages', ['rental' => $rental->id]) }}" class="inline-flex min-h-9 w-full min-w-20 items-center justify-center rounded-md border border-blue-200 px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30 sm:w-auto">
                                                     Send a message
                                                 </a>
                                             @endif

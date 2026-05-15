@@ -213,7 +213,10 @@ class NotificationsDropdownTest extends TestCase
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
     }
 
+<<<<<<< HEAD
 <<<<<<<<<< HEAD
+=======
+>>>>>>> c68d4e140b57dd180374a4c5adb160ada02cafb7
     public function test_admin_review_notification_redirects_to_reports_and_complaints(): void
     {
         $admin = User::factory()->admin()->create();
@@ -239,7 +242,8 @@ class NotificationsDropdownTest extends TestCase
             ->assertRedirect(route('admin.reports', [], false));
 
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
-=======
+    }
+
     public function test_renter_rental_update_redirects_to_my_rentals_row_even_with_stale_url(): void
     {
         [$owner, $renter, $rental] = $this->createRentalForNotifications();
@@ -349,6 +353,5 @@ class NotificationsDropdownTest extends TestCase
         ]);
 
         return [$owner, $renter, $rental];
->>>>>>> 52b7941cd76779bdee095a61ffbd968ea489ec59
     }
 }
