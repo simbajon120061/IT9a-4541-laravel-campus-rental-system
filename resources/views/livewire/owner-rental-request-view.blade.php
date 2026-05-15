@@ -191,6 +191,10 @@
                                 @elseif ($dueSoon)
                                     <span class="inline-flex rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">Due Soon</span>
                                     <p class="mt-2 text-xs font-semibold text-rose-700">{{ $daysLeft }} day(s) left</p>
+                                @elseif ($rental->status === 'completed')
+                                    <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Returned</span>
+                                @elseif ($rental->status === 'cancelled')
+                                    <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Cancelled</span>
                                 @elseif ($rental->status === 'active')
                                     <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Active Loan</span>
                                     <p class="mt-2 text-xs font-semibold text-slate-600">{{ $daysLeft }} day(s) left</p>
