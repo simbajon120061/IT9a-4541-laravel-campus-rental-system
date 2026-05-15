@@ -213,6 +213,7 @@ class NotificationsDropdownTest extends TestCase
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
     }
 
+    
     public function test_admin_review_notification_redirects_to_reports_and_complaints(): void
     {
         $admin = User::factory()->admin()->create();
