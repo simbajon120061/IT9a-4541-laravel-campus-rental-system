@@ -3,14 +3,11 @@
         <div class="hidden shrink-0 xl:block">
             <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                    <p class="text-sm font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300">Messages</p>
-                    <h1 class="mt-2 text-4xl font-extrabold tracking-normal text-slate-950 dark:text-white">Conversations</h1>
+                    <h1 class="mt-2 text-4xl font-extrabold tracking-normal text-blue-700 dark:text-white">Conversations</h1>
                     <p class="mt-2 text-lg text-slate-600 dark:text-slate-300">Read rental conversations connected to your account.</p>
                 </div>
                 <div class="hidden items-center justify-between gap-3 sm:flex">
-                <div class="flex shrink-0 items-center gap-2">
-                    
-                </div>
+                
             </div>
             </div>
             
