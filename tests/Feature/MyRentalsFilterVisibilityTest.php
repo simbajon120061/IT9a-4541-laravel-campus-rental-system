@@ -492,6 +492,17 @@ class MyRentalsFilterVisibilityTest extends TestCase
             ->assertSet('receiptRentalId', null);
     }
 
+    public function test_paid_rental_receipt_can_be_revisited_from_my_rentals(): void
+    {
+        [$renter, $rental] = $this->createPaidRentalForReceipt();
+
+        $this->actingAs($renter);
+
+        Livewire::test(MyRentals::class)
+            ->assertSee('View Receipt')
+            ->assertSee(route('renter.my-rentals', ['receipt' => $rental->id]).'#rental-'.$rental->id, false);
+    }
+
     public function test_renter_can_download_payment_receipt(): void
     {
         [$renter, $rental] = $this->createPaidRentalForReceipt();
@@ -501,7 +512,7 @@ class MyRentalsFilterVisibilityTest extends TestCase
         Livewire::withQueryParams(['receipt' => $rental->id])
             ->test(MyRentals::class)
             ->call('downloadReceipt')
-            ->assertFileDownloaded('campusrent-payment-receipt-'.$rental->id.'.txt');
+            ->assertFileDownloaded('campusrent-payment-receipt-'.$rental->id.'.jpg');
     }
 
     /**

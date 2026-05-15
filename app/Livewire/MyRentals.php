@@ -75,12 +75,12 @@ class MyRentals extends Component
         abort_if($this->receiptRentalId === null, 404);
 
         $rental = $this->receiptRentalQuery($this->receiptRentalId)->firstOrFail();
-        $receipt = $this->receiptText($rental);
+        $receipt = $this->receiptJpeg($rental);
 
         return response()->streamDownload(function () use ($receipt): void {
             echo $receipt;
-        }, 'campusrent-payment-receipt-'.$rental->id.'.txt', [
-            'Content-Type' => 'text/plain',
+        }, 'campusrent-payment-receipt-'.$rental->id.'.jpg', [
+            'Content-Type' => 'image/jpeg',
         ]);
     }
 
@@ -171,25 +171,65 @@ class MyRentals extends Component
             ->with('item.user');
     }
 
-    private function receiptText(Rental $rental): string
+    private function receiptJpeg(Rental $rental): string
     {
         $paidAmount = (float) ($rental->paid_amount ?? 0);
         $totalPrice = (float) $rental->total_price;
         $balance = max(0, $totalPrice - $paidAmount);
+        $paymentStatus = $rental->payment_status === Rental::PAYMENT_STATUS_FULLY_PAID ? 'Fully Paid' : 'Partial';
 
-        return implode(PHP_EOL, [
-            'CampusRent Payment Receipt',
-            'Receipt #: CR-'.$rental->id,
-            'Date: '.now()->format('M d, Y g:i A'),
-            '',
-            'Item: '.$rental->item->name,
-            'Lister: '.$rental->item->user->name,
-            'Rental Period: '.$rental->start_date->format('M d, Y').' - '.$rental->end_date->format('M d, Y'),
-            '',
-            'Total: PHP '.number_format($totalPrice, 2),
-            'Paid: PHP '.number_format($paidAmount, 2),
-            'Remaining Balance: PHP '.number_format($balance, 2),
-            'Payment Status: '.str_replace('_', ' ', ucfirst($rental->payment_status)),
-        ]);
+        $image = imagecreatetruecolor(900, 1200);
+
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $slate = imagecolorallocate($image, 15, 23, 42);
+        $muted = imagecolorallocate($image, 100, 116, 139);
+        $border = imagecolorallocate($image, 226, 232, 240);
+        $blue = imagecolorallocate($image, 37, 99, 235);
+        $emerald = imagecolorallocate($image, 4, 120, 87);
+        $softEmerald = imagecolorallocate($image, 236, 253, 245);
+        $softBlue = imagecolorallocate($image, 239, 246, 255);
+
+        imagefilledrectangle($image, 0, 0, 900, 1200, $white);
+        imagefilledrectangle($image, 0, 0, 900, 210, $softBlue);
+        imagefilledrectangle($image, 72, 250, 828, 1040, $white);
+        imagerectangle($image, 72, 250, 828, 1040, $border);
+
+        imagestring($image, 5, 72, 70, 'CampusRent', $blue);
+        imagestring($image, 5, 72, 110, 'Payment Receipt', $slate);
+        imagestring($image, 4, 72, 150, 'Receipt #CR-'.$rental->id, $muted);
+        imagestring($image, 4, 590, 150, now()->format('M d, Y g:i A'), $muted);
+
+        imagefilledrectangle($image, 112, 290, 788, 370, $softEmerald);
+        imagestring($image, 5, 132, 312, $paymentStatus, $emerald);
+        imagestring($image, 3, 132, 340, 'Payment confirmed by the lister', $emerald);
+
+        $receiptRows = [
+            ['Item', $rental->item->name],
+            ['Lister', $rental->item->user->name],
+            ['Rental Period', $rental->start_date->format('M d, Y').' - '.$rental->end_date->format('M d, Y')],
+            ['Total', 'PHP '.number_format($totalPrice, 2)],
+            ['Paid', 'PHP '.number_format($paidAmount, 2)],
+            ['Remaining Balance', 'PHP '.number_format($balance, 2)],
+            ['Payment Status', $paymentStatus],
+        ];
+
+        $y = 430;
+
+        foreach ($receiptRows as [$label, $value]) {
+            imagestring($image, 3, 132, $y, $label, $muted);
+            imagestring($image, 5, 132, $y + 28, mb_strimwidth($value, 0, 58, '...'), $slate);
+            imageline($image, 132, $y + 70, 768, $y + 70, $border);
+            $y += 92;
+        }
+
+        imagestring($image, 3, 132, 970, 'Keep this image as your proof of payment for this rental.', $muted);
+
+        ob_start();
+        imagejpeg($image, null, 92);
+        $receipt = (string) ob_get_clean();
+
+        imagedestroy($image);
+
+        return $receipt;
     }
 }
