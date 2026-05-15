@@ -2,8 +2,8 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div class="space-y-2">
-                <p class="text-sm font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300">Renter Portal</p>
-                <h1 class="text-4xl font-extrabold tracking-normal text-slate-950 dark:text-white">Renter Dashboard</h1>
+                <p class="text-sm font-bold uppercase tracking-wider text-blue-500 dark:text-blue-300">Renter Portal</p>
+                <h1 class="text-4xl font-extrabold tracking-normal text-blue-700 dark:text-white">Renter Dashboard</h1>
                 <p class="text-lg text-slate-600 dark:text-slate-300">Browse items, track requests, and manage everything you are renting.</p>
             </div>
 

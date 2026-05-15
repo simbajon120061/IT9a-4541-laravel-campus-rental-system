@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6 sm:mb-8">
-            <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-slate-100 sm:text-4xl">My Rentals</h1>
+            <h1 class="mb-2 text-3xl font-bold text-blue-700 dark:text-slate-100 sm:text-4xl">My Rentals</h1>
             <p class="text-sm text-gray-600 dark:text-slate-400 sm:text-base">Track the items you've rented</p>
         </div>
 
