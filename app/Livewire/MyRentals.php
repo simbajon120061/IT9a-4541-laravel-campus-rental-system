@@ -91,7 +91,7 @@ class MyRentals extends Component
 
         $baseQuery = Rental::query()
             ->where('renter_id', Auth::id())
-            ->with('item.user');
+            ->with('item.categoryRecord', 'item.user');
 
         if ($this->search !== '') {
             $search = '%'.trim($this->search).'%';

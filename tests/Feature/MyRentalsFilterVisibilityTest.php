@@ -68,6 +68,44 @@ class MyRentalsFilterVisibilityTest extends TestCase
             ->assertSessionHas('active_portal', 'renter');
     }
 
+    public function test_my_rentals_shows_rental_history_for_soft_deleted_items(): void
+    {
+        $renter = User::factory()->create();
+        $owner = User::factory()->create(['name' => 'Listing Owner']);
+
+        $category = Category::query()->firstOrCreate(
+            ['slug' => 'archived-items'],
+            ['name' => 'Archived Items', 'icon' => 'archive', 'is_active' => true]
+        );
+
+        $item = Item::query()->create([
+            'user_id' => $owner->id,
+            'name' => 'Archived Projector',
+            'description' => 'Projector kept for rental history',
+            'price' => 75,
+            'status' => 'available',
+            'category_id' => $category->id,
+        ]);
+
+        Rental::query()->create([
+            'item_id' => $item->id,
+            'renter_id' => $renter->id,
+            'start_date' => now()->subDays(2),
+            'end_date' => now()->addDay(),
+            'total_price' => 150,
+            'status' => Rental::STATUS_ACTIVE,
+        ]);
+
+        $item->delete();
+
+        $this->actingAs($renter);
+
+        Livewire::test(MyRentals::class)
+            ->assertSee('Archived Projector')
+            ->assertSee('Listing Owner')
+            ->assertSee('Archived Items');
+    }
+
     public function test_days_left_displays_whole_days_for_partial_day_difference(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-04-25 08:00:00'));
