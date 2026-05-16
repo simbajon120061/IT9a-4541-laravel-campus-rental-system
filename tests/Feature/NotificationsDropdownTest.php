@@ -169,6 +169,8 @@ class NotificationsDropdownTest extends TestCase
     public function test_open_notification_uses_explicit_url_for_renter_updates(): void
     {
         $renter = User::factory()->create();
+        $rentalId = 4;
+        $rentalUrl = route('renter.my-rentals').'#rental-'.$rentalId;
 
         $notification = $renter->notifications()->create([
             'id' => (string) Str::uuid(),
@@ -176,8 +178,8 @@ class NotificationsDropdownTest extends TestCase
             'data' => [
                 'title' => 'Rental request update',
                 'message' => 'Your request was approved.',
-                'rental_id' => 4,
-                'url' => route('my-rentals'),
+                'rental_id' => $rentalId,
+                'url' => $rentalUrl,
             ],
         ]);
 
@@ -185,13 +187,13 @@ class NotificationsDropdownTest extends TestCase
 
         Livewire::test(NotificationsDropdown::class)
             ->call('openNotification', $notification->id)
-            ->assertRedirect(route('my-rentals'));
+            ->assertRedirect($rentalUrl);
     }
 
-    public function test_open_message_notification_redirects_to_messages_anchor(): void
+    public function test_open_message_notification_with_missing_rental_uses_explicit_url(): void
     {
         $renter = User::factory()->create();
-        $messageUrl = route('rental-requests.show', 10).'#messages';
+        $messageUrl = route('renter.messages', ['rental' => 10]);
 
         $notification = $renter->notifications()->create([
             'id' => (string) Str::uuid(),
@@ -213,7 +215,6 @@ class NotificationsDropdownTest extends TestCase
         $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
     }
 
-    
     public function test_admin_review_notification_redirects_to_reports_and_complaints(): void
     {
         $admin = User::factory()->admin()->create();
