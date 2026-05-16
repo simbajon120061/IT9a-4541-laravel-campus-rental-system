@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
 
 // Landing page for guests
 Route::get('/', function () {
-    if (auth()->check()) {
+    if (auth()->guard('sanctum')->check()) {
         return redirect()->route('home');
     }
 

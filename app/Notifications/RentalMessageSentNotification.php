@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Models\Rental;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Crypt;
@@ -36,15 +35,6 @@ class RentalMessageSentNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $rental = Rental::query()
-            ->whereKey($this->rentalId)
-            ->with('item')
-            ->first();
-        $isOwnerRecipient = $rental && (int) $rental->item?->user_id === (int) $notifiable->id;
-        $url = $isOwnerRecipient
-            ? route('lister.messages', ['rental' => $this->rentalId])
-            : route('renter.messages', ['rental' => $this->rentalId]);
-
         return [
             'title' => 'New message',
             'message' => "{$this->senderName}: {$this->messageBody}",
@@ -54,7 +44,7 @@ class RentalMessageSentNotification extends Notification
             'item_name' => $this->itemName,
             'sender_name' => $this->senderName,
             'message_body' => $this->messageBody,
-            'url' => $url,
+            'url' => route('rental-requests.show', $this->rentalId).'#messages',
         ];
     }
 }

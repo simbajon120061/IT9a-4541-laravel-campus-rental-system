@@ -194,7 +194,7 @@
                                 @elseif ($rental->status === 'completed')
                                     <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Returned</span>
                                 @elseif ($rental->status === 'cancelled')
-                                    <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Cancelled</span>
+                                    <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">Rejected</span>
                                 @elseif ($rental->status === 'active')
                                     <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Active Loan</span>
                                     <p class="mt-2 text-xs font-semibold text-slate-600">{{ $daysLeft }} day(s) left</p>
@@ -236,7 +236,51 @@
                     </dl>
                 </div>
 
-                
+                <div id="messages" class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-lg font-bold text-slate-900">Messages</h2>
+
+                    <div class="mt-4 space-y-3">
+                        @forelse ($messages as $message)
+                            @php
+                                $isOwnMessage = (int) $message->sender_id === (int) auth()->id();
+                            @endphp
+
+                            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-semibold uppercase text-slate-500">
+                                            {{ $message->sender?->name ?? 'Unknown user' }}
+                                        </p>
+                                        <p class="mt-1 break-words text-sm font-medium text-slate-900">
+                                            {{ $message->body }}
+                                        </p>
+                                    </div>
+
+                                    @if (! $isOwnMessage)
+                                        <button type="button" wire:click="openMessageReportForm({{ $message->id }})" class="shrink-0 rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
+                                            Report
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <p class="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                                No messages yet.
+                            </p>
+                        @endforelse
+                    </div>
+
+                    <form wire:submit.prevent="sendMessage" class="mt-4 space-y-3">
+                        <label for="messageText" class="sr-only">Message</label>
+                        <textarea id="messageText" wire:model="messageText" rows="3" maxlength="40" class="w-full rounded-lg border-slate-300 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500" placeholder="Write a message"></textarea>
+                        @error('messageText')
+                            <p class="text-xs font-semibold text-rose-600">{{ $message }}</p>
+                        @enderror
+                        <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                            Send Message
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <div class="space-y-6">
@@ -316,7 +360,7 @@
                                 @endif
                             </div>
                         </div>
-                    @else (! $isOwner)
+                    @else
                         <div class="mt-1 grid gap-3">
                             <a href="{{ route('renter.messages', ['rental' => $rental->id]) }}" class="inline-flex w-full items-center justify-center rounded-md border border-blue-200 px-4 py-2 text-m font-semibold text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-200 dark:hover:bg-blue-900/30">
                                 Open Chat
