@@ -112,89 +112,149 @@
         </div>
     </section>
 
-    <!-- Categories Preview -->
-    <section class="bg-slate-50 dark:bg-slate-800 py-20">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-slate-50 mb-4">Browse Categories</h2>
-                <p class="text-lg text-slate-600 dark:text-slate-400">From electronics to sports equipment, find everything you need</p>
-            </div>
+   <!-- Categories Preview -->
+<section class="bg-slate-50 dark:bg-slate-800 py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary-500/50 transition-all">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-50">Electronics &amp; Gadgets</h3>
-                    </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Laptops, cameras, headphones & more</p>
-                </div>
+        <!-- Title -->
+        <div class="text-center mb-16">
+            <h2 class="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-slate-50 mb-4">
+                Browse Categories
+            </h2>
 
-                <div class="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary-500/50 transition-all">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 5.5 2 7.818 2 11.5S6.5 17.5 12 17.5s10-1.818 10-5.5-4.5-6-10-6z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-50">Sports &amp; PE Essentials</h3>
-                    </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Sports equipment & fitness gear</p>
-                </div>
-
-                <div class="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary-500/50 transition-all">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 5.5 2 7.818 2 11.5S6.5 17.5 12 17.5s10-1.818 10-5.5-4.5-6-10-6z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-50">Books</h3>
-                    </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Textbooks and study materials</p>
-                </div>
-
-                <div class="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary-500/50 transition-all">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 5.5 2 7.818 2 11.5S6.5 17.5 12 17.5s10-1.818 10-5.5-4.5-6-10-6z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-50">Clothing &amp; Accessories</h3>
-                    </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Fashion and formal wear</p>
-                </div>
-
-                <div class="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary-500/50 transition-all">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 5.5 2 7.818 2 11.5S6.5 17.5 12 17.5s10-1.818 10-5.5-4.5-6-10-6z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-50">Tools</h3>
-                    </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Tools and equipment</p>
-                </div>
-
-                <div class="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center group-hover:shadow-lg group-hover:shadow-primary-500/50 transition-all">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 5.5 2 7.818 2 11.5S6.5 17.5 12 17.5s10-1.818 10-5.5-4.5-6-10-6z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-50">School Supplies</h3>
-                    </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Pens, organizers, bags, and classroom essentials</p>
-                </div>
-            </div>
+            <p class="text-lg text-slate-600 dark:text-slate-400">
+                From electronics to sports equipment, find everything you need
+            </p>
         </div>
-    </section>
+
+        <!-- Categories Grid -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+            <!-- Electronics -->
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 4h14a2 2 0 012 2v7H3V6a2 2 0 012-2z"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                        Electronics & Gadgets
+                    </h3>
+                </div>
+
+                <p class="text-slate-600 dark:text-slate-400">
+                    Laptops, cameras, headphones & more
+                </p>
+            </div>
+
+            <!-- Sports -->
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.868v4.264a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                        Sports & PE Essentials
+                    </h3>
+                </div>
+
+                <p class="text-slate-600 dark:text-slate-400">
+                    Sports equipment & fitness gear
+                </p>
+            </div>
+
+            <!-- Books -->
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C7 5.5 3 7 3 10v11c0-3 4-4.5 9-4.5s9 1.5 9 4.5V10c0-3-4-4.5-9-3.747z"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                        Books
+                    </h3>
+                </div>
+
+                <p class="text-slate-600 dark:text-slate-400">
+                    Textbooks and study materials
+                </p>
+            </div>
+
+            <!-- Clothing -->
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4l4-2 4 4 4-4 4 2v4l-3 2v10H7V10L4 8V4z"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                        Clothing & Accessories
+                    </h3>
+                </div>
+
+                <p class="text-slate-600 dark:text-slate-400">
+                    Fashion and formal wear
+                </p>
+            </div>
+
+            <!-- Tools -->
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.7 6.3a4 4 0 00-5.4 5.4l-6 6a2 2 0 102.8 2.8l6-6a4 4 0 005.4-5.4z"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                        Tools
+                    </h3>
+                </div>
+
+                <p class="text-slate-600 dark:text-slate-400">
+                    Tools and equipment
+                </p>
+            </div>
+
+            <!-- School Supplies -->
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-violet-600 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 2l6 6-8 8H1v-6l8-8z"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                        School Supplies
+                    </h3>
+                </div>
+
+                <p class="text-slate-600 dark:text-slate-400">
+                    Pens, organizers, bags, and classroom essentials
+                </p>
+            </div>
+
+        </div>
+    </div>
+</section>
 
     <!-- CTA Section -->
     <section class="bg-gradient-primary dark:bg-gradient-to-br dark:from-primary-900 dark:to-accent-900 text-white py-20">
