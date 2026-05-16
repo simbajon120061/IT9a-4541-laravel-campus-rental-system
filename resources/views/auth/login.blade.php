@@ -78,19 +78,79 @@
                                         </a>
                                     @endif
                                 </div>
-                                <x-input id="password" class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white" type="password" name="password" required placeholder="********" />
-                            </div>
+                            <div x-data="{ showPassword: false }" class="relative">
 
-                            <div class="-mt-2">
-                                <label for="remember_me" class="inline-flex items-center gap-3">
-                                    <x-checkbox id="remember_me" name="remember" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 dark:border-slate-700" />
-                                    <span class="text-sm text-slate-600 dark:text-slate-300">{{ __('Remember me') }}</span>
-                                </label>
-                            </div>
+    <input
+        id="password"
+        x-bind:type="showPassword ? 'text' : 'password'"
+        name="password"
+        required
+        placeholder="********"
+        class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-slate-950 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+    >
 
-                            <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-3.5 font-bold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:shadow-xl">
-                                Sign in
-                            </button>
+    <!-- Eye Button -->
+    <button
+        type="button"
+        @click="showPassword = !showPassword"
+        class="absolute inset-y-0 right-0 flex items-center pr-4"
+    >
+
+        <!-- CLOSED EYE -->
+        <svg x-show="!showPassword"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-slate-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+
+            <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13.875 18.825A10.05 10.05 0 0112 19
+                c-4.478 0-8.268-2.943-9.542-7
+                a9.956 9.956 0 012.223-3.592M6.228 6.228
+                A9.956 9.956 0 0112 5c4.478 0 8.268
+                2.943 9.542 7a9.97 9.97 0 01-4.293
+                5.774M6.228 6.228L3 3m3.228
+                3.228l11.544 11.544" />
+        </svg>
+
+        <!-- OPEN EYE -->
+        <svg x-show="showPassword"
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-slate-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+
+            <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+
+            <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5
+                c4.478 0 8.268 2.943 9.542 7
+                -1.274 4.057-5.064 7-9.542 7
+                -4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+
+    </button>
+
+</div>
+ <div class="-mt-2">
+     <label for="remember_me" class="inline-flex items-center gap-3">
+      <x-checkbox id="remember_me" name="remember" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 dark:border-slate-700" />
+         <span class="text-sm text-slate-600 dark:text-slate-300">{{ __('Remember me') }}</span>
+             </label>
+             </div>
+
+         <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-3.5 font-bold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:shadow-xl">
+            Sign in
+                  </button>
                         </form>
 
                         <div class="mt-7 border-t border-slate-100 pt-6 text-center text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
